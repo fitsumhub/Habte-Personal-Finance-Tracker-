@@ -3,124 +3,1707 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Habte – Personal Finance ሀብቴ</title>
+  <title>Habte – Personal Finance Tracker for Ethiopia</title>
+  <meta name="description" content="Habte ሀብቴ is a privacy-first personal finance tracker built for managing Ethiopian bank and mobile-money transactions. 100% offline, biometric lock, ETB support.">
+  <meta name="keywords" content="Habte, Ethiopian finance app, personal finance Ethiopia, Telebirr tracker, CBE app, Ethiopian bank SMS, ETB tracker, ሀብቴ">
+  <meta property="og:title" content="Habte – Personal Finance Tracker for Ethiopia">
+  <meta property="og:description" content="Habte ሀብቴ — your private personal finance tracker for Ethiopian bank and mobile-money transactions. 100% offline. Privacy first.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://fitsumhub.github.io/Habte-Personal-Finance-Tracker-/">
+  <meta property="og:image" content="https://fitsumhub.github.io/Habte-Personal-Finance-Tracker-/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Habte – Personal Finance Tracker for Ethiopia">
+  <meta name="theme-color" content="#080A0A">
+  <link rel="canonical" href="https://fitsumhub.github.io/Habte-Personal-Finance-Tracker-/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Serif+Ethiopic:wght@400;700&display=swap" rel="stylesheet">
+
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    /* ==================== RESET & BASE ==================== */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg:        #080A0A;
+      --surface:   #101414;
+      --surface2:  #141A1A;
+      --emerald:   #00C853;
+      --emerald-d: #00A844;
+      --gold:      #FFD54F;
+      --white:     #F5F7F6;
+      --muted:     #9AA4A0;
+      --border:    rgba(255,255,255,0.06);
+      --glass:     rgba(16,20,20,0.72);
+      --radius:    16px;
+      --radius-lg: 28px;
+      --shadow:    0 24px 64px rgba(0,0,0,0.6);
+    }
+    html { scroll-behavior: smooth; overflow-x: hidden; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
-      color: #e6edf3;
-      min-height: 100vh;
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
     }
-    .hero {
-      text-align: center;
-      padding: 80px 20px 60px;
-    }
-    .logo {
-      width: 96px; height: 96px;
-      border-radius: 24px;
-      margin: 0 auto 24px;
-      background: linear-gradient(135deg, #238636, #1f6feb);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 48px;
-    }
-    h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 8px; }
-    .amharic { color: #58a6ff; font-size: 1.1rem; margin-bottom: 16px; }
-    .subtitle { color: #8b949e; font-size: 1.1rem; max-width: 600px; margin: 0 auto 40px; }
-    .badge-row {
-      display: flex; flex-wrap: wrap; gap: 12px;
-      justify-content: center; margin-bottom: 48px;
-    }
-    .btn {
+    a { text-decoration: none; color: inherit; }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; }
+    img { max-width: 100%; height: auto; }
+    ::selection { background: rgba(0,200,83,0.3); }
+
+    /* ==================== SCROLLBAR ==================== */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
+
+    /* ==================== UTILITIES ==================== */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .badge {
       display: inline-flex; align-items: center; gap: 8px;
-      padding: 12px 24px; border-radius: 8px;
-      text-decoration: none; font-weight: 600; font-size: 0.95rem;
-      transition: opacity 0.2s;
+      background: rgba(0,200,83,0.1); border: 1px solid rgba(0,200,83,0.25);
+      color: var(--emerald); font-size: 0.75rem; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 6px 14px; border-radius: 100px;
     }
-    .btn:hover { opacity: 0.85; }
-    .btn-primary { background: #238636; color: #fff; }
-    .btn-secondary { background: #21262d; color: #e6edf3; border: 1px solid #30363d; }
-    .features {
-      max-width: 1100px; margin: 0 auto; padding: 0 20px 80px;
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;
+    .section-label {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--emerald); margin-bottom: 16px;
     }
-    .card {
-      background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 24px;
+    .gradient-text {
+      background: linear-gradient(135deg, var(--white) 0%, var(--muted) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
-    .card-icon { font-size: 2rem; margin-bottom: 12px; }
-    .card h3 { font-size: 1.1rem; margin-bottom: 8px; color: #e6edf3; }
-    .card p { color: #8b949e; font-size: 0.9rem; line-height: 1.6; }
+    .emerald-text { color: var(--emerald); }
+    .gold-text { color: var(--gold); }
+    .sr-only {
+      position: absolute; width: 1px; height: 1px;
+      padding: 0; margin: -1px; overflow: hidden;
+      clip: rect(0,0,0,0); border: 0;
+    }
+
+    /* ==================== BUTTONS ==================== */
+    .btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 28px; border-radius: 12px;
+      font-size: 0.9rem; font-weight: 600;
+      transition: all 0.25s cubic-bezier(0.23,1,0.32,1);
+      position: relative; overflow: hidden; cursor: pointer;
+    }
+    .btn::before {
+      content: ''; position: absolute; inset: 0;
+      background: rgba(255,255,255,0.08);
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .btn:hover::before { opacity: 1; }
+    .btn:focus-visible { outline: 2px solid var(--emerald); outline-offset: 3px; }
+    .btn-primary {
+      background: var(--emerald); color: #000;
+      box-shadow: 0 0 0 0 rgba(0,200,83,0.4);
+    }
+    .btn-primary:hover {
+      background: var(--emerald-d);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,200,83,0.35);
+    }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-secondary {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--white);
+    }
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.09);
+      border-color: rgba(255,255,255,0.22);
+      transform: translateY(-2px);
+    }
+    .btn-lg { padding: 18px 36px; font-size: 1rem; border-radius: 14px; }
+    .btn svg { flex-shrink: 0; }
+
+    /* ==================== NAV ==================== */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 20px 0;
+      transition: all 0.4s cubic-bezier(0.23,1,0.32,1);
+    }
+    nav.scrolled {
+      background: rgba(8,10,10,0.88);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 0;
+    }
+    .nav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo {
+      display: flex; flex-direction: column; line-height: 1;
+    }
+    .nav-logo-en {
+      font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em;
+      color: var(--white);
+    }
+    .nav-logo-am {
+      font-size: 0.7rem; color: var(--emerald);
+      font-family: 'Noto Serif Ethiopic', serif;
+      font-weight: 400;
+    }
+    .nav-links {
+      display: flex; align-items: center; gap: 36px; list-style: none;
+    }
+    .nav-links a {
+      font-size: 0.875rem; font-weight: 500; color: var(--muted);
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--white); }
+    .nav-links a:focus-visible { outline: 2px solid var(--emerald); border-radius: 4px; }
+    .nav-cta {
+      background: var(--emerald); color: #000;
+      padding: 10px 22px; border-radius: 10px;
+      font-size: 0.85rem; font-weight: 700;
+      transition: all 0.2s;
+    }
+    .nav-cta:hover { background: var(--emerald-d); transform: translateY(-1px); }
+    .hamburger {
+      display: none; flex-direction: column; gap: 5px;
+      width: 32px; padding: 4px; cursor: pointer;
+      background: none; border: none;
+    }
+    .hamburger span {
+      display: block; height: 2px; background: var(--white);
+      border-radius: 2px; transition: all 0.3s;
+    }
+    .mobile-menu {
+      display: none; position: fixed; inset: 0; z-index: 99;
+      background: rgba(8,10,10,0.97);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 32px;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a {
+      font-size: 1.5rem; font-weight: 600; color: var(--white);
+      transition: color 0.2s;
+    }
+    .mobile-menu a:hover { color: var(--emerald); }
+    .mobile-close {
+      position: absolute; top: 24px; right: 24px;
+      font-size: 1.5rem; color: var(--muted); cursor: pointer;
+      background: none; border: none; font-family: inherit;
+    }
+
+    /* ==================== HERO ==================== */
+    .hero {
+      min-height: 100vh; display: flex; align-items: center;
+      padding: 120px 0 80px; position: relative; overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute; inset: 0; pointer-events: none;
+      overflow: hidden;
+    }
+    .hero-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,200,83,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,200,83,0.04) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 0%, transparent 100%);
+    }
+    .hero-glow-1 {
+      position: absolute; width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(0,200,83,0.08) 0%, transparent 70%);
+      top: -100px; right: -100px;
+    }
+    .hero-glow-2 {
+      position: absolute; width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(255,213,79,0.05) 0%, transparent 70%);
+      bottom: 0; left: -50px;
+    }
+    .hero-content {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 64px; align-items: center;
+      position: relative; z-index: 1;
+    }
+    .hero-left { animation: fadeUp 0.8s ease both; }
+    .hero-badge { margin-bottom: 28px; }
+    .hero-headline {
+      font-size: clamp(2.4rem, 5vw, 4rem);
+      font-weight: 900; line-height: 1.05;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+    }
+    .hero-sub-headline {
+      font-size: clamp(1.4rem, 2.8vw, 2rem);
+      font-weight: 700; color: var(--emerald);
+      font-family: 'Noto Serif Ethiopic', serif;
+      margin-bottom: 20px;
+      letter-spacing: -0.01em;
+    }
+    .hero-desc {
+      font-size: 1.05rem; color: var(--muted); line-height: 1.75;
+      max-width: 480px; margin-bottom: 40px;
+    }
+    .hero-ctas {
+      display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 36px;
+    }
+    .hero-trust {
+      display: flex; flex-wrap: wrap; gap: 20px; align-items: center;
+    }
+    .trust-item {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.78rem; color: var(--muted); font-weight: 500;
+    }
+    .trust-dot {
+      width: 4px; height: 4px; border-radius: 50%;
+      background: var(--emerald);
+    }
+
+    /* ==================== PHONE MOCKUP ==================== */
+    .hero-right {
+      display: flex; justify-content: center; align-items: center;
+      position: relative;
+      animation: fadeIn 1s ease 0.3s both;
+    }
+    .phone-scene {
+      position: relative; width: 300px; height: 580px;
+      transform-style: preserve-3d;
+      animation: phoneFloat 6s ease-in-out infinite;
+    }
+    @keyframes phoneFloat {
+      0%, 100% { transform: perspective(800px) rotateY(-8deg) rotateX(4deg) translateY(0px); }
+      50%       { transform: perspective(800px) rotateY(-8deg) rotateX(4deg) translateY(-14px); }
+    }
+    .phone-frame {
+      width: 100%; height: 100%;
+      background: linear-gradient(145deg, #1a2020 0%, #0d1212 100%);
+      border-radius: 44px;
+      border: 1.5px solid rgba(255,255,255,0.12);
+      box-shadow:
+        0 0 0 8px #0a0e0e,
+        0 0 0 9px rgba(255,255,255,0.06),
+        0 40px 80px rgba(0,0,0,0.8),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+      overflow: hidden; position: relative;
+    }
+    .phone-notch {
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 110px; height: 30px;
+      background: #0a0e0e; border-radius: 0 0 20px 20px; z-index: 10;
+    }
+    .phone-screen {
+      width: 100%; height: 100%;
+      background: var(--bg); padding: 44px 0 0;
+      overflow: hidden;
+    }
+
+    /* Dashboard inside phone */
+    .dash-header {
+      padding: 8px 16px 10px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .dash-greeting { font-size: 9px; color: var(--muted); }
+    .dash-name { font-size: 12px; font-weight: 700; color: var(--white); }
+    .dash-avatar {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--emerald), var(--emerald-d));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; color: #000;
+    }
+    .dash-balance-card {
+      margin: 0 14px 10px;
+      background: linear-gradient(135deg, #00C853 0%, #00A844 100%);
+      border-radius: 16px; padding: 14px;
+      position: relative; overflow: hidden;
+    }
+    .dash-balance-card::before {
+      content: ''; position: absolute;
+      width: 80px; height: 80px;
+      background: rgba(255,255,255,0.1); border-radius: 50%;
+      top: -20px; right: -20px;
+    }
+    .dash-balance-label { font-size: 7.5px; color: rgba(0,0,0,0.6); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .dash-balance-amount { font-size: 20px; font-weight: 900; color: #000; margin: 2px 0; }
+    .dash-balance-sub { font-size: 7px; color: rgba(0,0,0,0.55); }
+    .dash-accounts { display: flex; gap: 6px; padding: 0 14px 10px; }
+    .dash-account-pill {
+      flex: 1; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 10px;
+      padding: 7px 8px;
+    }
+    .dash-account-bank { font-size: 6.5px; color: var(--muted); font-weight: 600; }
+    .dash-account-amount { font-size: 9px; font-weight: 700; color: var(--white); }
+    .dash-section-title { font-size: 8px; font-weight: 700; color: var(--white); padding: 0 14px 5px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .dash-tx-list { padding: 0 14px; }
+    .dash-tx {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 0; border-bottom: 1px solid var(--border);
+    }
+    .dash-tx:last-child { border-bottom: none; }
+    .dash-tx-icon {
+      width: 22px; height: 22px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; flex-shrink: 0;
+    }
+    .dash-tx-icon.income { background: rgba(0,200,83,0.15); }
+    .dash-tx-icon.expense { background: rgba(255,82,82,0.15); }
+    .dash-tx-info { flex: 1; }
+    .dash-tx-name { font-size: 8px; font-weight: 600; color: var(--white); }
+    .dash-tx-date { font-size: 6.5px; color: var(--muted); }
+    .dash-tx-amount { font-size: 8px; font-weight: 700; }
+    .dash-tx-amount.income { color: var(--emerald); }
+    .dash-tx-amount.expense { color: #FF5252; }
+    .dash-chart-bar { display: flex; align-items: flex-end; gap: 3px; height: 40px; padding: 0 14px; margin-top: 8px; }
+    .dash-bar { flex: 1; background: rgba(0,200,83,0.2); border-radius: 3px 3px 0 0; }
+    .dash-bar.active { background: var(--emerald); }
+
+    /* Floating elements */
+    .float-el {
+      position: absolute; border-radius: 12px;
+      background: var(--glass); backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 10px 14px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      font-size: 0.7rem; font-weight: 600; color: var(--white);
+      white-space: nowrap;
+      animation-timing-function: ease-in-out;
+      animation-iteration-count: infinite;
+    }
+    .float-1 {
+      top: 30px; left: -110px;
+      animation: floatA 5s 0s infinite;
+    }
+    .float-2 {
+      top: 180px; right: -120px;
+      animation: floatB 6s 1s infinite;
+    }
+    .float-3 {
+      bottom: 140px; left: -100px;
+      animation: floatA 7s 0.5s infinite;
+    }
+    .float-4 {
+      bottom: 50px; right: -110px;
+      animation: floatB 5.5s 1.5s infinite;
+    }
+    @keyframes floatA {
+      0%, 100% { transform: translateY(0px) rotate(-1deg); }
+      50%       { transform: translateY(-8px) rotate(1deg); }
+    }
+    @keyframes floatB {
+      0%, 100% { transform: translateY(0px) rotate(1deg); }
+      50%       { transform: translateY(-10px) rotate(-1deg); }
+    }
+    .float-icon { font-size: 1rem; }
+    .float-label { font-size: 0.6rem; color: var(--muted); display: block; }
+    .float-val { font-size: 0.78rem; font-weight: 700; }
+
+    /* ==================== TRUST BAR ==================== */
+    .trust-bar {
+      padding: 40px 0; border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .trust-bar-label {
+      text-align: center; font-size: 0.7rem; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 28px;
+    }
+    .trust-banks {
+      display: flex; flex-wrap: wrap; gap: 12px;
+      justify-content: center; align-items: center;
+    }
+    .trust-bank-pill {
+      padding: 8px 18px; border-radius: 100px;
+      background: var(--surface); border: 1px solid var(--border);
+      font-size: 0.8rem; font-weight: 600; color: var(--muted);
+      transition: all 0.2s;
+    }
+    .trust-bank-pill:hover { border-color: rgba(0,200,83,0.3); color: var(--white); }
+
+    /* ==================== SECTIONS ==================== */
+    section { padding: 100px 0; }
+    .section-header { text-align: center; margin-bottom: 72px; }
+    .section-header h2 {
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 800; letter-spacing: -0.03em;
+      margin-bottom: 16px; line-height: 1.1;
+    }
+    .section-header p {
+      font-size: 1rem; color: var(--muted);
+      max-width: 560px; margin: 0 auto; line-height: 1.75;
+    }
+
+    /* ==================== FEATURES ==================== */
+    .features-bg { background: var(--surface); }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .feature-card {
+      background: var(--bg);
+      border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: 32px;
+      transition: all 0.35s cubic-bezier(0.23,1,0.32,1);
+      position: relative; overflow: hidden; cursor: default;
+    }
+    .feature-card::before {
+      content: ''; position: absolute;
+      inset: 0; border-radius: inherit;
+      background: linear-gradient(135deg, rgba(0,200,83,0.06), transparent 60%);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .feature-card::after {
+      content: ''; position: absolute;
+      inset: -1px; border-radius: inherit;
+      border: 1px solid transparent;
+      background: linear-gradient(135deg, rgba(0,200,83,0.3), transparent 50%) border-box;
+      -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: destination-out; mask-composite: exclude;
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .feature-card:hover { transform: translateY(-6px) scale(1.01); border-color: rgba(0,200,83,0.2); }
+    .feature-card:hover::before, .feature-card:hover::after { opacity: 1; }
+    .feature-icon {
+      width: 48px; height: 48px; border-radius: 14px;
+      background: rgba(0,200,83,0.1); border: 1px solid rgba(0,200,83,0.2);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px; transition: all 0.3s;
+    }
+    .feature-card:hover .feature-icon {
+      background: rgba(0,200,83,0.2);
+      box-shadow: 0 0 20px rgba(0,200,83,0.2);
+    }
+    .feature-icon svg { width: 22px; height: 22px; }
+    .feature-card h3 {
+      font-size: 1rem; font-weight: 700; margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+    .feature-card p { font-size: 0.88rem; color: var(--muted); line-height: 1.7; }
+
+    /* ==================== PHONE SCREENS SHOWCASE ==================== */
+    .showcase {
+      background: linear-gradient(180deg, var(--bg) 0%, var(--surface) 50%, var(--bg) 100%);
+    }
+    .screens-row {
+      display: flex; gap: 20px; justify-content: center; align-items: center;
+      overflow-x: auto; padding: 20px 0;
+      scrollbar-width: none;
+    }
+    .screens-row::-webkit-scrollbar { display: none; }
+    .mini-phone {
+      flex-shrink: 0; width: 160px; height: 300px;
+      background: linear-gradient(145deg, #1a2020, #0d1212);
+      border-radius: 28px;
+      border: 1.5px solid rgba(255,255,255,0.1);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06);
+      overflow: hidden; position: relative;
+      transition: all 0.4s cubic-bezier(0.23,1,0.32,1);
+      cursor: pointer;
+    }
+    .mini-phone:hover { transform: translateY(-12px) scale(1.04); box-shadow: 0 32px 70px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,200,83,0.25); }
+    .mini-phone:nth-child(2) { transform: scale(1.05) translateY(-8px); }
+    .mini-phone:nth-child(2):hover { transform: scale(1.08) translateY(-16px); }
+    .mini-phone:nth-child(3) { transform: scale(1.08) translateY(-14px); }
+    .mini-phone:nth-child(3):hover { transform: scale(1.12) translateY(-22px); }
+    .mini-phone:nth-child(4) { transform: scale(1.05) translateY(-8px); }
+    .mini-phone:nth-child(4):hover { transform: scale(1.08) translateY(-16px); }
+    .mini-screen { width: 100%; height: 100%; background: var(--bg); padding: 8px; }
+    .mini-screen-title { font-size: 7px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; padding: 6px 4px 0; }
+    .mini-bar { height: 6px; border-radius: 3px; margin-bottom: 5px; }
+    .mini-card { height: 40px; border-radius: 8px; background: var(--surface); margin-bottom: 5px; }
+    .mini-row { display: flex; gap: 4px; margin-bottom: 5px; }
+    .mini-chip { flex: 1; height: 24px; border-radius: 6px; background: var(--surface); }
+    .screen-label {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(8,10,10,0.9));
+      padding: 20px 10px 12px;
+      font-size: 7.5px; font-weight: 600; color: var(--muted);
+      text-align: center; text-transform: uppercase; letter-spacing: 0.08em;
+    }
+
+    /* ==================== ANALYTICS ==================== */
+    .analytics-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 40px; align-items: center;
+    }
+    .analytics-left {}
+    .analytics-demo-label {
+      font-size: 0.65rem; color: var(--gold); font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      margin-bottom: 32px;
+      border: 1px solid rgba(255,213,79,0.2); display: inline-block;
+      padding: 4px 12px; border-radius: 100px; background: rgba(255,213,79,0.05);
+    }
+    .stat-row { display: flex; gap: 16px; margin-bottom: 20px; }
+    .stat-card {
+      flex: 1; background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+    }
+    .stat-label { font-size: 0.7rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+    .stat-value { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; }
+    .stat-value.income { color: var(--emerald); }
+    .stat-value.expense { color: #FF5252; }
+    .stat-value.net { color: var(--gold); }
+    .stat-change { font-size: 0.7rem; color: var(--muted); margin-top: 4px; }
+    .chart-container {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 24px; margin-top: 20px;
+    }
+    .chart-title { font-size: 0.8rem; font-weight: 600; color: var(--muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 80px; }
+    .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+    .bar {
+      width: 100%; border-radius: 4px 4px 0 0;
+      background: rgba(0,200,83,0.25);
+      transition: height 1s cubic-bezier(0.23,1,0.32,1);
+      position: relative;
+    }
+    .bar.animated { background: var(--emerald); }
+    .bar-lbl { font-size: 6px; color: var(--muted); }
+    .analytics-right { position: relative; }
+    .categories-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 28px;
+    }
+    .cat-title { font-size: 0.85rem; font-weight: 700; margin-bottom: 20px; }
+    .cat-row {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 14px;
+    }
+    .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .cat-name { font-size: 0.82rem; color: var(--white); flex: 1; }
+    .cat-bar-wrap { flex: 2; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+    .cat-bar-fill { height: 100%; border-radius: 3px; width: 0; transition: width 1.2s cubic-bezier(0.23,1,0.32,1); }
+    .cat-pct { font-size: 0.75rem; color: var(--muted); font-weight: 600; min-width: 32px; text-align: right; }
+    .budget-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 24px; margin-top: 16px;
+    }
+    .budget-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .budget-label { font-size: 0.8rem; color: var(--muted); }
+    .budget-val { font-size: 0.8rem; font-weight: 700; color: var(--white); }
+    .budget-prog { height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+    .budget-fill { height: 100%; border-radius: 4px; background: var(--emerald); width: 0; transition: width 1.2s cubic-bezier(0.23,1,0.32,1); }
+
+    /* ==================== SECURITY ==================== */
+    .security { background: var(--surface); }
+    .security-inner {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 64px; align-items: center;
+    }
+    .security-shield {
+      display: flex; justify-content: center; align-items: center;
+      position: relative;
+    }
+    .shield-svg-wrap {
+      width: 260px; height: 260px; position: relative;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .shield-glow {
+      position: absolute; inset: -30px;
+      background: radial-gradient(circle, rgba(0,200,83,0.15) 0%, transparent 70%);
+      animation: shieldPulse 3s ease-in-out infinite;
+    }
+    @keyframes shieldPulse { 0%, 100% { opacity: 0.5; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.05); } }
+    .shield-svg { width: 200px; height: 200px; filter: drop-shadow(0 0 30px rgba(0,200,83,0.4)); }
+    .shield-badges {
+      position: absolute; inset: 0;
+    }
+    .shield-badge {
+      position: absolute;
+      background: var(--glass); backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 100px;
+      padding: 6px 14px; font-size: 0.7rem; font-weight: 600; color: var(--white);
+      white-space: nowrap;
+    }
+    .sb-1 { top: 0; left: 50%; transform: translateX(-50%); }
+    .sb-2 { top: 30%; left: -20%; }
+    .sb-3 { top: 30%; right: -20%; }
+    .sb-4 { bottom: 30%; left: -10%; }
+    .sb-5 { bottom: 30%; right: -10%; }
+    .security-content h2 {
+      font-size: clamp(1.8rem, 3vw, 2.5rem);
+      font-weight: 800; letter-spacing: -0.03em;
+      margin-bottom: 20px; line-height: 1.1;
+    }
+    .security-content p { font-size: 1rem; color: var(--muted); line-height: 1.8; margin-bottom: 32px; }
+    .security-checks { display: flex; flex-direction: column; gap: 12px; }
+    .security-check {
+      display: flex; align-items: center; gap: 12px;
+      font-size: 0.9rem; color: var(--white);
+    }
+    .check-icon {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: rgba(0,200,83,0.15); border: 1px solid rgba(0,200,83,0.3);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .check-icon svg { width: 12px; height: 12px; color: var(--emerald); }
+
+    /* ==================== ETHIOPIA ==================== */
+    .ethiopia-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+    .ethiopia-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 28px;
+      transition: all 0.3s cubic-bezier(0.23,1,0.32,1);
+    }
+    .ethiopia-card:hover { transform: translateY(-4px); border-color: rgba(0,200,83,0.2); }
+    .eth-icon {
+      font-size: 1.8rem; margin-bottom: 14px; display: block;
+    }
+    .ethiopia-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 8px; }
+    .ethiopia-card p { font-size: 0.83rem; color: var(--muted); line-height: 1.65; }
+
+    /* ==================== JOURNEY ==================== */
+    .journey { background: var(--surface); }
+    .journey-steps {
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      gap: 16px; position: relative;
+    }
+    .journey-steps::before {
+      content: '';
+      position: absolute; top: 32px; left: 10%; right: 10%; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,200,83,0.4), rgba(0,200,83,0.4), transparent);
+      z-index: 0;
+    }
+    .journey-step { text-align: center; position: relative; z-index: 1; }
+    .journey-num {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: var(--bg); border: 1.5px solid rgba(0,200,83,0.4);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 1.1rem; font-weight: 800; color: var(--emerald);
+      transition: all 0.3s;
+    }
+    .journey-step:hover .journey-num {
+      background: rgba(0,200,83,0.1);
+      box-shadow: 0 0 24px rgba(0,200,83,0.3);
+    }
+    .journey-step h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 8px; }
+    .journey-step p { font-size: 0.78rem; color: var(--muted); line-height: 1.6; }
+
+    /* ==================== DOWNLOAD CTA ==================== */
+    .cta-section {
+      background: linear-gradient(135deg, rgba(0,200,83,0.08) 0%, rgba(8,10,10,0) 50%);
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+    .cta-section h2 {
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      font-weight: 900; letter-spacing: -0.03em;
+      margin-bottom: 20px; line-height: 1.05;
+    }
+    .cta-section p { font-size: 1rem; color: var(--muted); max-width: 500px; margin: 0 auto 40px; line-height: 1.75; }
+    .cta-buttons { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
+    .cta-package { margin-top: 32px; font-size: 0.72rem; color: var(--muted); font-family: monospace; }
+
+    /* ==================== FAQ ==================== */
+    .faq-list { max-width: 700px; margin: 0 auto; }
+    .faq-item {
+      border-bottom: 1px solid var(--border); overflow: hidden;
+    }
+    .faq-question {
+      width: 100%; text-align: left; padding: 22px 0;
+      font-size: 0.95rem; font-weight: 600; color: var(--white);
+      background: none; border: none; cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center; gap: 16px;
+      transition: color 0.2s;
+    }
+    .faq-question:hover { color: var(--emerald); }
+    .faq-question:focus-visible { outline: 2px solid var(--emerald); border-radius: 4px; }
+    .faq-icon { flex-shrink: 0; width: 20px; height: 20px; transition: transform 0.3s; color: var(--emerald); }
+    .faq-item.open .faq-icon { transform: rotate(45deg); }
+    .faq-answer {
+      font-size: 0.88rem; color: var(--muted); line-height: 1.8;
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.4s cubic-bezier(0.23,1,0.32,1), padding 0.3s;
+      padding-bottom: 0;
+    }
+    .faq-item.open .faq-answer { max-height: 200px; padding-bottom: 22px; }
+
+    /* ==================== FOOTER ==================== */
     footer {
-      text-align: center; padding: 32px 20px;
-      border-top: 1px solid #21262d; color: #8b949e; font-size: 0.85rem;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 60px 0 36px;
     }
-    footer a { color: #58a6ff; text-decoration: none; }
-    footer a:hover { text-decoration: underline; }
+    .footer-inner {
+      display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 48px;
+    }
+    .footer-brand {}
+    .footer-logo-en { font-size: 1.4rem; font-weight: 800; color: var(--white); letter-spacing: -0.02em; }
+    .footer-logo-am {
+      font-family: 'Noto Serif Ethiopic', serif;
+      font-size: 0.85rem; color: var(--emerald); display: block; margin-top: 2px;
+    }
+    .footer-tagline { font-size: 0.82rem; color: var(--muted); margin-top: 12px; line-height: 1.6; }
+    .footer-col h4 { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 16px; }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .footer-col ul a { font-size: 0.85rem; color: var(--muted); transition: color 0.2s; }
+    .footer-col ul a:hover { color: var(--white); }
+    .footer-col ul a:focus-visible { outline: 2px solid var(--emerald); border-radius: 4px; }
+    .footer-bottom {
+      margin-top: 48px; padding-top: 24px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 12px;
+    }
+    .footer-bottom p { font-size: 0.78rem; color: var(--muted); }
+    .footer-package { font-family: monospace; font-size: 0.72rem; color: rgba(154,164,160,0.5); }
+
+    /* ==================== ANIMATIONS ==================== */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.23,1,0.32,1); }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+
+    /* ==================== RESPONSIVE ==================== */
+    @media (max-width: 1024px) {
+      .hero-content { grid-template-columns: 1fr; gap: 60px; text-align: center; }
+      .hero-left { display: flex; flex-direction: column; align-items: center; }
+      .hero-desc { text-align: center; }
+      .hero-trust { justify-content: center; }
+      .hero-right { order: -1; }
+      .phone-scene { width: 240px; height: 460px; }
+      .float-1, .float-3 { left: -70px; }
+      .float-2, .float-4 { right: -80px; }
+      .analytics-grid { grid-template-columns: 1fr; }
+      .security-inner { grid-template-columns: 1fr; }
+      .security-shield { order: -1; }
+      .footer-inner { grid-template-columns: 1fr 1fr; }
+      .journey-steps { grid-template-columns: repeat(3, 1fr); }
+      .journey-steps::before { display: none; }
+    }
+    @media (max-width: 768px) {
+      section { padding: 72px 0; }
+      .nav-links, .nav-cta { display: none; }
+      .hamburger { display: flex; }
+      .hero { padding: 100px 0 60px; }
+      .hero-headline { font-size: 2.2rem; }
+      .phone-scene { width: 200px; height: 390px; }
+      .float-1, .float-2, .float-3, .float-4 { display: none; }
+      .screens-row { justify-content: flex-start; padding: 20px 24px; }
+      .mini-phone:nth-child(n) { transform: none; }
+      .journey-steps { grid-template-columns: 1fr 1fr; }
+      .footer-inner { grid-template-columns: 1fr; gap: 32px; }
+      .footer-bottom { flex-direction: column; text-align: center; }
+      .shield-badges { display: none; }
+      .shield-svg-wrap { width: 180px; height: 180px; }
+    }
+    @media (max-width: 480px) {
+      .container { padding: 0 16px; }
+      .hero-headline { font-size: 1.9rem; }
+      .hero-ctas { flex-direction: column; align-items: stretch; }
+      .hero-ctas .btn { justify-content: center; }
+      .stat-row { flex-direction: column; }
+      .journey-steps { grid-template-columns: 1fr; }
+      .cta-buttons { flex-direction: column; align-items: center; }
+    }
+
+    /* reduced-motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+      .phone-scene { animation: none; }
+      .float-el { animation: none; }
+    }
   </style>
 </head>
 <body>
-  <div class="hero">
-    <div class="logo">💰</div>
-    <h1>Habte – Personal Finance</h1>
-    <p class="amharic">ሀብቴ — Your Wealth, Secured 🇪🇹</p>
-    <p class="subtitle">
-      The privacy-first, fully offline finance tracker built for Ethiopia.
-      Automatically reads bank SMS from Telebirr, CBE, BOA, Awash &amp; more.
-    </p>
-    <div class="badge-row">
-      <a class="btn btn-primary" href="https://play.google.com/store/apps/details?id=com.fitsumhub.habtetracker" target="_blank">
-        ▶ Download on Google Play
-      </a>
-      <a class="btn btn-secondary" href="https://github.com/fitsumhub/Habte-Personal-Finance-Tracker-" target="_blank">
-        ⭐ Star on GitHub
-      </a>
-      <a class="btn btn-secondary" href="privacy-policy.html">
-        🔒 Privacy Policy
-      </a>
+
+<!-- ==================== NAVIGATION ==================== -->
+<nav id="navbar" role="navigation" aria-label="Main navigation">
+  <div class="container nav-inner">
+    <a href="#" class="nav-logo" aria-label="Habte – Home">
+      <span class="nav-logo-en">Habte</span>
+      <span class="nav-logo-am">ሀብቴ</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#security">Security</a></li>
+      <li><a href="#analytics">Analytics</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+    <a href="https://play.google.com/store/apps/details?id=com.fitsumhub.habtetracker" class="nav-cta" target="_blank" rel="noopener" aria-label="Download Habte on Google Play">Download App</a>
+    <button class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Mobile navigation">
+  <button class="mobile-close" id="mobile-close" aria-label="Close menu">✕</button>
+  <a href="#features" class="mobile-link">Features</a>
+  <a href="#security" class="mobile-link">Security</a>
+  <a href="#analytics" class="mobile-link">Analytics</a>
+  <a href="#faq" class="mobile-link">FAQ</a>
+  <a href="https://play.google.com/store/apps/details?id=com.fitsumhub.habtetracker" class="btn btn-primary" target="_blank" rel="noopener">Download on Google Play</a>
+</div>
+
+<!-- ==================== HERO ==================== -->
+<main>
+<section class="hero" aria-labelledby="hero-headline">
+  <div class="hero-bg" aria-hidden="true">
+    <div class="hero-grid"></div>
+    <div class="hero-glow-1"></div>
+    <div class="hero-glow-2"></div>
+  </div>
+  <div class="container">
+    <div class="hero-content">
+      <!-- Left -->
+      <div class="hero-left">
+        <div class="hero-badge">
+          <span class="badge">🇪🇹 Built for Ethiopia</span>
+        </div>
+        <h1 class="hero-headline" id="hero-headline">
+          Take Control<br>of Your <span class="emerald-text">Money.</span>
+        </h1>
+        <p class="hero-sub-headline">Habte — ሀብቴ</p>
+        <p class="hero-desc">Your private personal finance tracker for managing Ethiopian bank and mobile-money transactions. Automatic SMS parsing, biometric lock, and 100% offline.</p>
+        <div class="hero-ctas">
+          <a href="https://play.google.com/store/apps/details?id=com.fitsumhub.habtetracker" class="btn btn-primary btn-lg" target="_blank" rel="noopener" aria-label="Download Habte on Google Play">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.18 23.72c.17.1.37.16.57.16.21 0 .42-.06.6-.17l14.04-8.1-3.01-3.01-12.2 11.12zm-1.06-20.6A1.5 1.5 0 0 0 2 4.14v15.72c0 .49.27.92.67 1.14l12.34-12.34L2.12 3.12zM21.17 10.49l-2.48-1.43L15.4 12l3.29 3.29 2.48-1.43A1.5 1.5 0 0 0 22 12.5c0-.63-.32-1.19-.83-1.51zM4.35.45L16.69 12.4 13.67 9.38.45.54C.28.43.1.37-.07.37a1.38 1.38 0 0 0-.64.16L4.35.45z"/></svg>
+            Download on Google Play
+          </a>
+          <a href="#features" class="btn btn-secondary btn-lg">
+            Explore Features
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>
+          </a>
+        </div>
+        <div class="hero-trust" aria-label="Key features">
+          <span class="trust-item"><span class="trust-dot"></span>100% Offline</span>
+          <span class="trust-item"><span class="trust-dot"></span>Privacy First</span>
+          <span class="trust-item"><span class="trust-dot"></span>ETB Support</span>
+          <span class="trust-item"><span class="trust-dot"></span>English + Amharic</span>
+        </div>
+      </div>
+
+      <!-- Right – Phone -->
+      <div class="hero-right" aria-hidden="true">
+        <div class="phone-scene">
+          <!-- Floating cards -->
+          <div class="float-el float-1">
+            <span class="float-icon">🔒</span>
+            <span class="float-label">Security</span>
+            <span class="float-val">Biometric Lock</span>
+          </div>
+          <div class="float-el float-2">
+            <span class="float-icon">📈</span>
+            <span class="float-label">This Month</span>
+            <span class="float-val emerald-text">+ETB 3,200</span>
+          </div>
+          <div class="float-el float-3">
+            <span class="float-icon">🏦</span>
+            <span class="float-label">Telebirr</span>
+            <span class="float-val">ETB 8,450</span>
+          </div>
+          <div class="float-el float-4">
+            <span class="float-icon">💰</span>
+            <span class="float-label">Budget</span>
+            <span class="float-val">68% used</span>
+          </div>
+
+          <!-- Phone frame -->
+          <div class="phone-frame" role="img" aria-label="Habte app dashboard showing account balances and recent transactions">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="dash-header">
+                <div>
+                  <div class="dash-greeting">Good morning,</div>
+                  <div class="dash-name">Fitsum ✦</div>
+                </div>
+                <div class="dash-avatar">F</div>
+              </div>
+              <div class="dash-balance-card">
+                <div class="dash-balance-label">Total Balance</div>
+                <div class="dash-balance-amount">ETB 45,200</div>
+                <div class="dash-balance-sub">Across 3 accounts • Updated now</div>
+              </div>
+              <div class="dash-accounts">
+                <div class="dash-account-pill">
+                  <div class="dash-account-bank">CBE</div>
+                  <div class="dash-account-amount">ETB 24,750</div>
+                </div>
+                <div class="dash-account-pill">
+                  <div class="dash-account-bank">Telebirr</div>
+                  <div class="dash-account-amount">ETB 8,450</div>
+                </div>
+                <div class="dash-account-pill">
+                  <div class="dash-account-bank">BOA</div>
+                  <div class="dash-account-amount">ETB 12,000</div>
+                </div>
+              </div>
+              <div class="dash-section-title">Recent</div>
+              <div class="dash-tx-list">
+                <div class="dash-tx">
+                  <div class="dash-tx-icon income">↓</div>
+                  <div class="dash-tx-info">
+                    <div class="dash-tx-name">Salary — CBE</div>
+                    <div class="dash-tx-date">Today, 09:14</div>
+                  </div>
+                  <div class="dash-tx-amount income">+15,000</div>
+                </div>
+                <div class="dash-tx">
+                  <div class="dash-tx-icon expense">↑</div>
+                  <div class="dash-tx-info">
+                    <div class="dash-tx-name">Kaldi's Coffee</div>
+                    <div class="dash-tx-date">Yesterday</div>
+                  </div>
+                  <div class="dash-tx-amount expense">−320</div>
+                </div>
+                <div class="dash-tx">
+                  <div class="dash-tx-icon expense">↑</div>
+                  <div class="dash-tx-info">
+                    <div class="dash-tx-name">Ride — Telebirr</div>
+                    <div class="dash-tx-date">Yesterday</div>
+                  </div>
+                  <div class="dash-tx-amount expense">−180</div>
+                </div>
+                <div class="dash-tx">
+                  <div class="dash-tx-icon income">↓</div>
+                  <div class="dash-tx-info">
+                    <div class="dash-tx-name">Transfer received</div>
+                    <div class="dash-tx-date">Mon, 16:40</div>
+                  </div>
+                  <div class="dash-tx-amount income">+2,500</div>
+                </div>
+              </div>
+              <div class="dash-section-title" style="margin-top:8px">Weekly Spend</div>
+              <div class="dash-chart-bar">
+                <div class="dash-bar" style="height:35%"></div>
+                <div class="dash-bar" style="height:55%"></div>
+                <div class="dash-bar" style="height:40%"></div>
+                <div class="dash-bar" style="height:70%"></div>
+                <div class="dash-bar" style="height:45%"></div>
+                <div class="dash-bar active" style="height:60%"></div>
+                <div class="dash-bar" style="height:20%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
+</section>
 
-  <div class="features">
-    <div class="card">
-      <div class="card-icon">🏦</div>
-      <h3>Multi-Bank SMS Parsing</h3>
-      <p>Automatically reads transactions from Telebirr, CBE, BOA, Awash, Dashen and more. Real-time, no manual entry needed.</p>
-    </div>
-    <div class="card">
-      <div class="card-icon">🛡️</div>
-      <h3>100% Private &amp; Offline</h3>
-      <p>All data stays on your device. No cloud sync, no accounts, no data uploads. Biometric lock protects your finances.</p>
-    </div>
-    <div class="card">
-      <div class="card-icon">📊</div>
-      <h3>Insights &amp; Analytics</h3>
-      <p>Net worth dashboard, weekly spending charts, budget tracking by category, and CSV export for deep analysis.</p>
-    </div>
-    <div class="card">
-      <div class="card-icon">🔲</div>
-      <h3>Home Screen Widgets</h3>
-      <p>5 beautiful widgets: Net Worth, Weekly Spending, Budget Pulse, Quick Tracker, and Multi-Bank balance at a glance.</p>
-    </div>
-    <div class="card">
-      <div class="card-icon">🌐</div>
-      <h3>English &amp; Amharic</h3>
-      <p>Full UI localization in English and Amharic (አማርኛ) with Ethiopian date formats and ETB currency.</p>
-    </div>
-    <div class="card">
-      <div class="card-icon">🔔</div>
-      <h3>Payment Reminders</h3>
-      <p>Smart reminders for recurring bills and payments. Never miss a due date again.</p>
+<!-- ==================== TRUST BAR ==================== -->
+<div class="trust-bar" aria-label="Supported financial services">
+  <div class="container">
+    <p class="trust-bar-label">Supports transactions from</p>
+    <div class="trust-banks">
+      <span class="trust-bank-pill">Telebirr</span>
+      <span class="trust-bank-pill">CBE</span>
+      <span class="trust-bank-pill">Bank of Abyssinia</span>
+      <span class="trust-bank-pill">Awash Bank</span>
+      <span class="trust-bank-pill">Dashen Bank</span>
+      <span class="trust-bank-pill">Abay Bank</span>
+      <span class="trust-bank-pill">Wegagen Bank</span>
+      <span class="trust-bank-pill">Zemen Bank</span>
     </div>
   </div>
+</div>
 
-  <footer>
-    <p>
-      <a href="privacy-policy.html">Privacy Policy</a> ·
-      <a href="app-ads.txt">app-ads.txt</a> ·
-      <a href="https://github.com/fitsumhub/Habte-Personal-Finance-Tracker-">GitHub</a> ·
-      <a href="https://play.google.com/store/apps/details?id=com.fitsumhub.habtetracker">Google Play</a>
-    </p>
-    <p style="margin-top: 12px;">© 2024 Fitsumhub · Package: com.fitsumhub.habtetracker</p>
-  </footer>
+<!-- ==================== SHOWCASE ==================== -->
+<section class="showcase" aria-labelledby="showcase-heading">
+  <div class="container">
+    <div class="section-header reveal">
+      <p class="section-label">App Experience</p>
+      <h2 id="showcase-heading">Your Entire Financial Life.<br><span class="emerald-text">One Place.</span></h2>
+      <p>Five powerful views — from daily transactions to long-term budget health, all in one private app.</p>
+    </div>
+    <div class="screens-row reveal" role="list" aria-label="App screenshots">
+
+      <div class="mini-phone" role="listitem" tabindex="0" aria-label="Overview Dashboard">
+        <div class="mini-screen">
+          <div class="mini-screen-title">Overview</div>
+          <div class="mini-card" style="background:linear-gradient(135deg,#00C853,#00A844);height:52px;"></div>
+          <div class="mini-row"><div class="mini-chip"></div><div class="mini-chip"></div></div>
+          <div class="mini-bar" style="background:var(--surface2);width:90%"></div>
+          <div class="mini-bar" style="background:var(--surface2);width:70%"></div>
+          <div class="mini-bar" style="background:var(--surface2);width:80%"></div>
+        </div>
+        <div class="screen-label">Dashboard</div>
+      </div>
+
+      <div class="mini-phone" role="listitem" tabindex="0" aria-label="Transaction History">
+        <div class="mini-screen">
+          <div class="mini-screen-title">Transactions</div>
+          <div style="padding:0 4px;">
+            <div class="mini-row" style="align-items:center;gap:6px;margin-bottom:6px;">
+              <div style="width:18px;height:18px;border-radius:6px;background:rgba(0,200,83,0.2);"></div>
+              <div style="flex:1;"><div class="mini-bar" style="width:70%;height:5px;background:var(--surface2);margin-bottom:2px;"></div><div class="mini-bar" style="width:40%;height:4px;background:rgba(255,255,255,0.04);"></div></div>
+              <div style="width:28px;height:5px;border-radius:2px;background:rgba(0,200,83,0.3);"></div>
+            </div>
+            <div class="mini-row" style="align-items:center;gap:6px;margin-bottom:6px;">
+              <div style="width:18px;height:18px;border-radius:6px;background:rgba(255,82,82,0.2);"></div>
+              <div style="flex:1;"><div class="mini-bar" style="width:60%;height:5px;background:var(--surface2);margin-bottom:2px;"></div><div class="mini-bar" style="width:35%;height:4px;background:rgba(255,255,255,0.04);"></div></div>
+              <div style="width:24px;height:5px;border-radius:2px;background:rgba(255,82,82,0.3);"></div>
+            </div>
+            <div class="mini-row" style="align-items:center;gap:6px;">
+              <div style="width:18px;height:18px;border-radius:6px;background:rgba(255,82,82,0.2);"></div>
+              <div style="flex:1;"><div class="mini-bar" style="width:65%;height:5px;background:var(--surface2);margin-bottom:2px;"></div><div class="mini-bar" style="width:42%;height:4px;background:rgba(255,255,255,0.04);"></div></div>
+              <div style="width:20px;height:5px;border-radius:2px;background:rgba(255,82,82,0.3);"></div>
+            </div>
+          </div>
+          <div style="padding:8px 4px 0;display:flex;align-items:flex-end;gap:3px;height:48px;">
+            <div style="flex:1;background:rgba(0,200,83,0.15);border-radius:2px 2px 0 0;height:40%;"></div>
+            <div style="flex:1;background:rgba(0,200,83,0.25);border-radius:2px 2px 0 0;height:60%;"></div>
+            <div style="flex:1;background:rgba(0,200,83,0.15);border-radius:2px 2px 0 0;height:35%;"></div>
+            <div style="flex:1;background:var(--emerald);border-radius:2px 2px 0 0;height:80%;"></div>
+            <div style="flex:1;background:rgba(0,200,83,0.2);border-radius:2px 2px 0 0;height:50%;"></div>
+            <div style="flex:1;background:rgba(0,200,83,0.15);border-radius:2px 2px 0 0;height:65%;"></div>
+            <div style="flex:1;background:rgba(0,200,83,0.1);border-radius:2px 2px 0 0;height:20%;"></div>
+          </div>
+        </div>
+        <div class="screen-label">Transactions</div>
+      </div>
+
+      <div class="mini-phone" role="listitem" tabindex="0" aria-label="Analytics">
+        <div class="mini-screen">
+          <div class="mini-screen-title">Analytics</div>
+          <div style="display:flex;align-items:center;justify-content:center;height:80px;">
+            <div style="width:70px;height:70px;border-radius:50%;border:8px solid rgba(0,200,83,0.2);border-top-color:var(--emerald);position:relative;">
+              <div style="position:absolute;inset:6px;border-radius:50%;border:6px solid rgba(255,213,79,0.15);border-right-color:var(--gold);"></div>
+            </div>
+          </div>
+          <div style="padding:0 6px;">
+            <div class="mini-row" style="margin-bottom:4px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--emerald);margin-top:1px;"></div><div class="mini-bar" style="flex:1;height:5px;background:var(--surface2);margin:0 4px;"></div><div class="mini-bar" style="width:20px;height:5px;background:rgba(0,200,83,0.3);"></div></div>
+            <div class="mini-row" style="margin-bottom:4px;"><div style="width:6px;height:6px;border-radius:50%;background:var(--gold);margin-top:1px;"></div><div class="mini-bar" style="flex:1;height:5px;background:var(--surface2);margin:0 4px;"></div><div class="mini-bar" style="width:16px;height:5px;background:rgba(255,213,79,0.3);"></div></div>
+            <div class="mini-row"><div style="width:6px;height:6px;border-radius:50%;background:#FF5252;margin-top:1px;"></div><div class="mini-bar" style="flex:1;height:5px;background:var(--surface2);margin:0 4px;"></div><div class="mini-bar" style="width:12px;height:5px;background:rgba(255,82,82,0.3);"></div></div>
+          </div>
+        </div>
+        <div class="screen-label">Analytics</div>
+      </div>
+
+      <div class="mini-phone" role="listitem" tabindex="0" aria-label="Budget Tracking">
+        <div class="mini-screen">
+          <div class="mini-screen-title">Budget</div>
+          <div style="padding:4px 6px;">
+            <div style="margin-bottom:8px;">
+              <div class="mini-bar" style="width:60%;height:5px;background:var(--surface2);margin-bottom:4px;"></div>
+              <div style="height:6px;border-radius:3px;background:var(--surface2);overflow:hidden;"><div style="width:72%;height:100%;background:var(--emerald);border-radius:3px;"></div></div>
+            </div>
+            <div style="margin-bottom:8px;">
+              <div class="mini-bar" style="width:50%;height:5px;background:var(--surface2);margin-bottom:4px;"></div>
+              <div style="height:6px;border-radius:3px;background:var(--surface2);overflow:hidden;"><div style="width:45%;height:100%;background:var(--gold);border-radius:3px;"></div></div>
+            </div>
+            <div style="margin-bottom:8px;">
+              <div class="mini-bar" style="width:55%;height:5px;background:var(--surface2);margin-bottom:4px;"></div>
+              <div style="height:6px;border-radius:3px;background:var(--surface2);overflow:hidden;"><div style="width:88%;height:100%;background:#FF5252;border-radius:3px;"></div></div>
+            </div>
+            <div>
+              <div class="mini-bar" style="width:45%;height:5px;background:var(--surface2);margin-bottom:4px;"></div>
+              <div style="height:6px;border-radius:3px;background:var(--surface2);overflow:hidden;"><div style="width:30%;height:100%;background:var(--emerald);border-radius:3px;"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="screen-label">Budget</div>
+      </div>
+
+      <div class="mini-phone" role="listitem" tabindex="0" aria-label="Bank Accounts">
+        <div class="mini-screen">
+          <div class="mini-screen-title">Accounts</div>
+          <div style="padding:4px 6px;display:flex;flex-direction:column;gap:6px;">
+            <div style="background:var(--surface);border-radius:8px;padding:7px;">
+              <div class="mini-bar" style="width:40%;height:5px;background:rgba(255,255,255,0.08);margin-bottom:3px;"></div>
+              <div class="mini-bar" style="width:65%;height:6px;background:rgba(0,200,83,0.3);"></div>
+            </div>
+            <div style="background:var(--surface);border-radius:8px;padding:7px;">
+              <div class="mini-bar" style="width:35%;height:5px;background:rgba(255,255,255,0.08);margin-bottom:3px;"></div>
+              <div class="mini-bar" style="width:55%;height:6px;background:rgba(255,213,79,0.3);"></div>
+            </div>
+            <div style="background:var(--surface);border-radius:8px;padding:7px;">
+              <div class="mini-bar" style="width:30%;height:5px;background:rgba(255,255,255,0.08);margin-bottom:3px;"></div>
+              <div class="mini-bar" style="width:48%;height:6px;background:rgba(0,200,83,0.2);"></div>
+            </div>
+          </div>
+        </div>
+        <div class="screen-label">Accounts</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FEATURES ==================== -->
+<section id="features" class="features-bg" aria-labelledby="features-heading">
+  <div class="container">
+    <div class="section-header reveal">
+      <p class="section-label">What Habte Does</p>
+      <h2 id="features-heading">Every Feature You<br>Actually Need.</h2>
+      <p>Built around how Ethiopian users actually manage money — with automatic SMS parsing, multi-bank support, and rock-solid privacy.</p>
+    </div>
+    <div class="features-grid">
+
+      <div class="feature-card reveal">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#00C853" stroke-width="1.8" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/></svg>
+        </div>
+        <h3>Multi-Bank SMS Tracking</h3>
+        <p>Automatically reads and organizes transaction SMS from CBE, Telebirr, BOA, Awash, Dashen, and more — no manual entry needed.</p>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-1">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#00C853" stroke-width="1.8" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3>Privacy First</h3>
+        <p>Your financial data is stored only on your device. No cloud sync, no accounts required, no data leaving your phone.</p>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-2">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#00C853" stroke-width="1.8" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <h3>Smart Analytics</h3>
+        <p>Understand your spending patterns, income sources, categories, and financial trends with clear, interactive charts.</p>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-3">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#00C853" stroke-width="1.8" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        </div>
+        <h3>Multi-Account Management</h3>
+        <p>Manage CBE, Telebirr, BOA, Awash and other accounts from a single unified dashboard with real-time balance tracking.</p>
+      </div>
+
+      <div class="feature-card reveal">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#00C853" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <h3>Budget Tracking</h3>
+        <p>Set spending limits per category and track remaining budget in real time. Get warned before overspending.</p>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-1">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#00C853" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </div>
+        <h3>Home Screen Widgets</h3>
+        <p>5 beautiful widgets — Net Worth, Weekly Spending, Budget Pulse, Quick Tracker, and Multi-Bank balance, right on your home screen.</p>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-2">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#00C853" stroke-width="1.8" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <h3>English + Amharic</h3>
+        <p>Fully bilingual — switch between English and Amharic (አማርኛ) at any time. Designed for Ethiopian users first.</p>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-3">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#00C853" stroke-width="1.8" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        <h3>Payment Reminders</h3>
+        <p>Never miss a bill or recurring payment. Set smart reminders and Habte notifies you before due dates.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SECURITY ==================== -->
+<section id="security" class="security" aria-labelledby="security-heading">
+  <div class="container">
+    <div class="security-inner">
+      <div class="security-shield reveal" aria-hidden="true">
+        <div class="shield-svg-wrap">
+          <div class="shield-glow"></div>
+          <svg class="shield-svg" viewBox="0 0 200 220" fill="none" aria-hidden="true">
+            <path d="M100 10 L180 45 L180 110 C180 160 100 210 100 210 C100 210 20 160 20 110 L20 45 Z" fill="rgba(0,200,83,0.08)" stroke="rgba(0,200,83,0.5)" stroke-width="2"/>
+            <path d="M100 30 L165 58 L165 108 C165 148 100 192 100 192 C100 192 35 148 35 108 L35 58 Z" fill="rgba(0,200,83,0.05)" stroke="rgba(0,200,83,0.25)" stroke-width="1.5"/>
+            <path d="M75 105 L90 120 L125 85" stroke="#00C853" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="100" cy="105" r="28" fill="rgba(0,200,83,0.06)" stroke="rgba(0,200,83,0.2)" stroke-width="1"/>
+          </svg>
+          <div class="shield-badges" aria-hidden="true">
+            <span class="shield-badge sb-1">Biometric Lock</span>
+            <span class="shield-badge sb-2">Offline</span>
+            <span class="shield-badge sb-3">No Cloud Sync</span>
+            <span class="shield-badge sb-4">Secure Data</span>
+            <span class="shield-badge sb-5">Privacy First</span>
+          </div>
+        </div>
+      </div>
+      <div class="security-content reveal">
+        <p class="section-label">Security &amp; Privacy</p>
+        <h2 id="security-heading">Your Money Data<br>Belongs to <span class="emerald-text">You.</span></h2>
+        <p>Habte is designed around a privacy-first architecture. Your financial information — every transaction, balance, and account — stays on your device. No server receives it, no account is required to store it, and no third party can access it.</p>
+        <div class="security-checks">
+          <div class="security-check">
+            <span class="check-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            No account required — use the app immediately after install
+          </div>
+          <div class="security-check">
+            <span class="check-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            100% offline — all data stored locally on your device
+          </div>
+          <div class="security-check">
+            <span class="check-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            Biometric lock — fingerprint or face ID on startup
+          </div>
+          <div class="security-check">
+            <span class="check-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            Privacy Mode — prevents screenshots of financial data
+          </div>
+          <div class="security-check">
+            <span class="check-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            Balance masking — hide all amounts with a single tap
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== ANALYTICS ==================== -->
+<section id="analytics" aria-labelledby="analytics-heading">
+  <div class="container">
+    <div class="section-header reveal">
+      <p class="section-label">Financial Insights</p>
+      <h2 id="analytics-heading">Understand Where<br>Your Money <span class="emerald-text">Goes.</span></h2>
+      <p>Habte turns raw SMS transactions into actionable financial intelligence — spending trends, category breakdowns, and budget utilization.</p>
+    </div>
+    <div class="analytics-grid">
+      <div class="analytics-left reveal">
+        <div class="analytics-demo-label" aria-label="Sample data for illustration only">Demo Data — Illustration Only</div>
+        <div class="stat-row">
+          <div class="stat-card">
+            <div class="stat-label">Monthly Income</div>
+            <div class="stat-value income" data-count="45000">ETB 0</div>
+            <div class="stat-change">↑ from last month</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Expenses</div>
+            <div class="stat-value expense" data-count="27500">ETB 0</div>
+            <div class="stat-change">↓ vs avg</div>
+          </div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-card">
+            <div class="stat-label">Net Balance</div>
+            <div class="stat-value net" data-count="17500">ETB 0</div>
+            <div class="stat-change">Saved this month</div>
+          </div>
+        </div>
+        <div class="chart-container" id="bar-chart-section">
+          <div class="chart-title">Weekly Spending — ETB</div>
+          <div class="bar-chart" aria-label="Weekly spending bar chart (demo data)">
+            <div class="bar-wrap"><div class="bar" data-height="42" style="height:0%"></div><span class="bar-lbl">Mon</span></div>
+            <div class="bar-wrap"><div class="bar" data-height="68" style="height:0%"></div><span class="bar-lbl">Tue</span></div>
+            <div class="bar-wrap"><div class="bar" data-height="35" style="height:0%"></div><span class="bar-lbl">Wed</span></div>
+            <div class="bar-wrap"><div class="bar animated" data-height="88" style="height:0%"></div><span class="bar-lbl">Thu</span></div>
+            <div class="bar-wrap"><div class="bar" data-height="55" style="height:0%"></div><span class="bar-lbl">Fri</span></div>
+            <div class="bar-wrap"><div class="bar" data-height="72" style="height:0%"></div><span class="bar-lbl">Sat</span></div>
+            <div class="bar-wrap"><div class="bar" data-height="28" style="height:0%"></div><span class="bar-lbl">Sun</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="analytics-right reveal reveal-delay-2">
+        <div class="categories-card" id="cat-chart-section">
+          <div class="cat-title">Spending by Category</div>
+          <div class="cat-row">
+            <div class="cat-dot" style="background:#00C853"></div>
+            <div class="cat-name">Food &amp; Dining</div>
+            <div class="cat-bar-wrap"><div class="cat-bar-fill" data-width="62" style="background:#00C853"></div></div>
+            <div class="cat-pct">62%</div>
+          </div>
+          <div class="cat-row">
+            <div class="cat-dot" style="background:#FFD54F"></div>
+            <div class="cat-name">Transport</div>
+            <div class="cat-bar-wrap"><div class="cat-bar-fill" data-width="38" style="background:#FFD54F"></div></div>
+            <div class="cat-pct">38%</div>
+          </div>
+          <div class="cat-row">
+            <div class="cat-dot" style="background:#64B5F6"></div>
+            <div class="cat-name">Utilities</div>
+            <div class="cat-bar-wrap"><div class="cat-bar-fill" data-width="24" style="background:#64B5F6"></div></div>
+            <div class="cat-pct">24%</div>
+          </div>
+          <div class="cat-row">
+            <div class="cat-dot" style="background:#CE93D8"></div>
+            <div class="cat-name">Shopping</div>
+            <div class="cat-bar-wrap"><div class="cat-bar-fill" data-width="18" style="background:#CE93D8"></div></div>
+            <div class="cat-pct">18%</div>
+          </div>
+          <div class="cat-row">
+            <div class="cat-dot" style="background:#FF8A65"></div>
+            <div class="cat-name">Healthcare</div>
+            <div class="cat-bar-wrap"><div class="cat-bar-fill" data-width="12" style="background:#FF8A65"></div></div>
+            <div class="cat-pct">12%</div>
+          </div>
+        </div>
+        <div class="budget-card" id="budget-chart-section">
+          <div class="budget-row">
+            <span class="budget-label">Monthly Budget</span>
+            <span class="budget-val">ETB 30,000</span>
+          </div>
+          <div class="budget-prog" style="margin-bottom:16px;">
+            <div class="budget-fill" data-width="68" style="background:var(--emerald)"></div>
+          </div>
+          <div class="budget-row">
+            <span class="budget-label">Food Budget</span>
+            <span class="budget-val">ETB 8,000</span>
+          </div>
+          <div class="budget-prog" style="margin-bottom:16px;">
+            <div class="budget-fill" data-width="85" style="background:var(--gold)"></div>
+          </div>
+          <div class="budget-row">
+            <span class="budget-label">Transport</span>
+            <span class="budget-val">ETB 3,500</span>
+          </div>
+          <div class="budget-prog">
+            <div class="budget-fill" data-width="42" style="background:var(--emerald)"></div>
+          </div>
+          <p style="font-size:0.68rem;color:rgba(154,164,160,0.5);margin-top:14px;">* Demo figures for illustration only</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== ETHIOPIA SECTION ==================== -->
+<section style="background:var(--surface)" aria-labelledby="ethiopia-heading">
+  <div class="container">
+    <div class="section-header reveal">
+      <p class="section-label">Made for Ethiopia</p>
+      <h2 id="ethiopia-heading">Finance Management,<br>Built for <span class="emerald-text">Ethiopia.</span></h2>
+      <p>Every design decision, every supported bank, every language choice — made specifically for Ethiopian users.</p>
+    </div>
+    <div class="ethiopia-grid">
+      <div class="ethiopia-card reveal">
+        <span class="eth-icon" aria-hidden="true">💱</span>
+        <h3>Ethiopian Birr (ETB)</h3>
+        <p>Native ETB support throughout the app. All amounts displayed in Ethiopian Birr with correct formatting.</p>
+      </div>
+      <div class="ethiopia-card reveal reveal-delay-1">
+        <span class="eth-icon" aria-hidden="true">🏛️</span>
+        <h3>Ethiopian Banks</h3>
+        <p>SMS parsing for CBE, BOA, Awash, Dashen, Abay, Wegagen, Zemen, and more. New banks added regularly.</p>
+      </div>
+      <div class="ethiopia-card reveal reveal-delay-2">
+        <span class="eth-icon" aria-hidden="true">📱</span>
+        <h3>Mobile Money</h3>
+        <p>First-class support for Telebirr — Ethiopia's largest mobile money platform — with real-time transaction tracking.</p>
+      </div>
+      <div class="ethiopia-card reveal reveal-delay-3">
+        <span class="eth-icon" aria-hidden="true">🗣️</span>
+        <h3>Amharic + English</h3>
+        <p>Full bilingual interface. Switch languages instantly. All UI text, category names, and error messages translated.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== JOURNEY ==================== -->
+<section class="journey" aria-labelledby="journey-heading">
+  <div class="container">
+    <div class="section-header reveal">
+      <p class="section-label">How It Works</p>
+      <h2 id="journey-heading">Designed Around Your<br>Everyday <span class="emerald-text">Money.</span></h2>
+    </div>
+    <div class="journey-steps reveal">
+      <div class="journey-step">
+        <div class="journey-num" aria-hidden="true">1</div>
+        <h4>Receive</h4>
+        <p>Bank or Telebirr sends you a transaction SMS</p>
+      </div>
+      <div class="journey-step">
+        <div class="journey-num" aria-hidden="true">2</div>
+        <h4>Parse</h4>
+        <p>Habte reads and extracts amount, type, and account</p>
+      </div>
+      <div class="journey-step">
+        <div class="journey-num" aria-hidden="true">3</div>
+        <h4>Categorize</h4>
+        <p>Transaction is auto-tagged: Food, Transport, Income…</p>
+      </div>
+      <div class="journey-step">
+        <div class="journey-num" aria-hidden="true">4</div>
+        <h4>Analyze</h4>
+        <p>View trends, charts, and spending breakdowns instantly</p>
+      </div>
+      <div class="journey-step">
+        <div class="journey-num" aria-hidden="true">5</div>
+        <h4>Plan</h4>
+        <p>Set budgets and reminders based on your real spending</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FAQ ==================== -->
+<section id="faq" aria-labelledby="faq-heading">
+  <div class="container">
+    <div class="section-header reveal">
+      <p class="section-label">Questions</p>
+      <h2 id="faq-heading">Frequently Asked<br><span class="emerald-text">Questions.</span></h2>
+    </div>
+    <div class="faq-list reveal" role="list">
+
+      <div class="faq-item" role="listitem">
+        <button class="faq-question" aria-expanded="false">
+          Is my financial data safe?
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <div class="faq-answer">Yes. All your financial data is stored locally on your device using Android's secure SQLite database. No data is uploaded to any server. Habte does not require an internet connection to function, and no account or sign-up is needed.</div>
+      </div>
+
+      <div class="faq-item" role="listitem">
+        <button class="faq-question" aria-expanded="false">
+          Which banks are supported?
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <div class="faq-answer">Habte currently supports SMS parsing from: Telebirr, Commercial Bank of Ethiopia (CBE), Bank of Abyssinia (BOA), Awash Bank, Dashen Bank, Abay Bank, Wegagen Bank, and Zemen Bank. More banks are added in each update.</div>
+      </div>
+
+      <div class="faq-item" role="listitem">
+        <button class="faq-question" aria-expanded="false">
+          Does Habte require internet?
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <div class="faq-answer">No. All core features — SMS parsing, transaction tracking, budget management, analytics, and widgets — work 100% offline. An internet connection is only used to display ads (if you have the free version).</div>
+      </div>
+
+      <div class="faq-item" role="listitem">
+        <button class="faq-question" aria-expanded="false">
+          How does SMS parsing work?
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <div class="faq-answer">Habte reads incoming SMS messages from known bank sender IDs (e.g., "127" for Telebirr, "CBE" for CBE). It uses pattern matching to extract the transaction amount, type (debit/credit), and timestamp — entirely on-device. It does NOT read personal messages.</div>
+      </div>
+
+      <div class="faq-item" role="listitem">
+        <button class="faq-question" aria-expanded="false">
+          Does it work on Samsung devices?
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <div class="faq-answer">Yes. Version 1.0.2 includes specific fixes for Samsung One UI — including dual-SIM SMS handling, background crash fixes, and widget stability improvements. It is tested on Samsung Galaxy devices running Android 12–15.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CTA ==================== -->
+<section class="cta-section" aria-labelledby="cta-heading">
+  <div class="container">
+    <div class="reveal">
+      <p class="section-label" style="text-align:center">Download Free</p>
+      <h2 id="cta-heading">Start Managing Your<br>Money <span class="emerald-text">Smarter.</span></h2>
+      <p>Download Habte and bring your Ethiopian financial accounts together in one private, powerful dashboard. Free on Google Play.</p>
+      <div class="cta-buttons">
+        <a href="https://play.google.com/store/apps/details?id=com.fitsumhub.habtetracker" class="btn btn-primary btn-lg" target="_blank" rel="noopener" aria-label="Download Habte on Google Play">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.18 23.72c.17.1.37.16.57.16.21 0 .42-.06.6-.17l14.04-8.1-3.01-3.01-12.2 11.12zm-1.06-20.6A1.5 1.5 0 0 0 2 4.14v15.72c0 .49.27.92.67 1.14l12.34-12.34L2.12 3.12zM21.17 10.49l-2.48-1.43L15.4 12l3.29 3.29 2.48-1.43A1.5 1.5 0 0 0 22 12.5c0-.63-.32-1.19-.83-1.51zM4.35.45L16.69 12.4 13.67 9.38.45.54C.28.43.1.37-.07.37a1.38 1.38 0 0 0-.64.16L4.35.45z"/></svg>
+          Download Habte on Google Play
+        </a>
+        <a href="https://github.com/fitsumhub/Habte-Personal-Finance-Tracker-" class="btn btn-secondary btn-lg" target="_blank" rel="noopener" aria-label="View source code on GitHub">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          View on GitHub
+        </a>
+      </div>
+      <p class="cta-package">com.fitsumhub.habtetracker · v1.0.2 · MIT License</p>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ==================== FOOTER ==================== -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-logo-en">Habte</div>
+        <span class="footer-logo-am">ሀብቴ</span>
+        <p class="footer-tagline">Your Wealth, Secured.<br>Privacy-first personal finance for Ethiopia.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#security">Security</a></li>
+          <li><a href="#analytics">Analytics</a></li>
+          <li><a href="#faq">FAQ</a></li>
+          <li><a href="https://play.google.com/store/apps/details?id=com.fitsumhub.habtetracker" target="_blank" rel="noopener">Google Play</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Resources</h4>
+        <ul>
+          <li><a href="privacy-policy.html">Privacy Policy</a></li>
+          <li><a href="https://github.com/fitsumhub/Habte-Personal-Finance-Tracker-" target="_blank" rel="noopener">GitHub</a></li>
+          <li><a href="https://github.com/fitsumhub/Habte-Personal-Finance-Tracker-/blob/main/CHANGELOG.md" target="_blank" rel="noopener">Changelog</a></li>
+          <li><a href="https://github.com/fitsumhub/Habte-Personal-Finance-Tracker-/issues/new?template=bug_report.yml" target="_blank" rel="noopener">Report a Bug</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 Fitsumhub · All rights reserved</p>
+      <p class="footer-package">com.fitsumhub.habtetracker</p>
+    </div>
+  </div>
+</footer>
+
+<!-- ==================== SCRIPTS ==================== -->
+<script>
+(function() {
+  'use strict';
+
+  // ── Nav scroll
+  const nav = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 40);
+  }, { passive: true });
+
+  // ── Mobile menu
+  const hamburger = document.getElementById('hamburger');
+  const mobileMenu = document.getElementById('mobile-menu');
+  const mobileClose = document.getElementById('mobile-close');
+  const mobileLinks = document.querySelectorAll('.mobile-link');
+
+  function openMenu() {
+    mobileMenu.classList.add('open');
+    hamburger.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+    mobileClose.focus();
+  }
+  function closeMenu() {
+    mobileMenu.classList.remove('open');
+    hamburger.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+    hamburger.focus();
+  }
+  hamburger.addEventListener('click', openMenu);
+  mobileClose.addEventListener('click', closeMenu);
+  mobileLinks.forEach(l => l.addEventListener('click', closeMenu));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && mobileMenu.classList.contains('open')) closeMenu(); });
+
+  // ── Scroll reveal
+  const revealEls = document.querySelectorAll('.reveal');
+  const revealObs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); } });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  revealEls.forEach(el => revealObs.observe(el));
+
+  // ── Chart animations
+  let chartsAnimated = false;
+  const chartSection = document.getElementById('bar-chart-section');
+  const chartObs = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting && !chartsAnimated) {
+      chartsAnimated = true;
+      animateCharts();
+    }
+  }, { threshold: 0.3 });
+  if (chartSection) chartObs.observe(chartSection);
+
+  function animateCharts() {
+    // Bar chart
+    document.querySelectorAll('.bar[data-height]').forEach((bar, i) => {
+      setTimeout(() => {
+        bar.style.height = bar.dataset.height + '%';
+      }, i * 80);
+    });
+    // Category bars
+    document.querySelectorAll('.cat-bar-fill[data-width]').forEach((fill, i) => {
+      setTimeout(() => {
+        fill.style.width = fill.dataset.width + '%';
+      }, 200 + i * 100);
+    });
+    // Budget fills
+    document.querySelectorAll('.budget-fill[data-width]').forEach((fill, i) => {
+      setTimeout(() => {
+        fill.style.width = fill.dataset.width + '%';
+      }, 400 + i * 100);
+    });
+    // Count-up
+    document.querySelectorAll('[data-count]').forEach(el => {
+      const target = parseInt(el.dataset.count, 10);
+      const prefix = el.className.includes('income') ? 'ETB ' : (el.className.includes('expense') ? 'ETB ' : 'ETB ');
+      let start = 0;
+      const duration = 1600;
+      const step = timestamp => {
+        if (!start) start = timestamp;
+        const p = Math.min((timestamp - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = prefix + Math.floor(eased * target).toLocaleString();
+        if (p < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+  }
+
+  // ── FAQ accordion
+  document.querySelectorAll('.faq-question').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.faq-item');
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(i => {
+        i.classList.remove('open');
+        i.querySelector('.faq-question').setAttribute('aria-expanded', 'false');
+      });
+      if (!isOpen) {
+        item.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+      }
+    });
+    btn.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.click(); }
+    });
+  });
+
+  // ── Smooth scroll for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+
+  // ── Subtle parallax on hero phone (desktop only)
+  const phoneScene = document.querySelector('.phone-scene');
+  if (phoneScene && window.matchMedia('(min-width: 1024px)').matches) {
+    window.addEventListener('scroll', () => {
+      const scrollY = window.scrollY;
+      if (scrollY < window.innerHeight) {
+        phoneScene.style.transform = `perspective(800px) rotateY(-8deg) rotateX(4deg) translateY(${scrollY * 0.08}px)`;
+      }
+    }, { passive: true });
+  }
+
+  // ── Feature card subtle 3D tilt
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!prefersReduced) {
+    document.querySelectorAll('.feature-card').forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width - 0.5;
+        const y = (e.clientY - rect.top) / rect.height - 0.5;
+        card.style.transform = `translateY(-6px) scale(1.01) rotateX(${-y * 6}deg) rotateY(${x * 6}deg)`;
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = '';
+      });
+    });
+  }
+})();
+</script>
 </body>
 </html>
