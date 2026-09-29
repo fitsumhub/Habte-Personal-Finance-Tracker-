@@ -1,0 +1,53 @@
+name: "🚀 Release Build"
+description: "Build and sign a release AAB for Play Store submission"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: "Version name (e.g., 1.0.3)"
+        required: true
+      version_code:
+        description: "Version code (e.g., 4)"
+        required: true
+
+jobs:
+  release:
+    name: Build Release AAB
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Create keystore.properties
+        run: |
+          echo "storeFile=keystore/habte-release.jks" >> keystore.properties
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> keystore.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> keystore.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> keystore.properties
+
+      - name: Decode Keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > keystore/habte-release.jks
+
+      - name: Build Release AAB
+        run: ./gradlew bundleRelease
+          -PversionName=${{ github.event.inputs.version_name }}
+          -PversionCode=${{ github.event.inputs.version_code }}
+
+      - name: Upload Release AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-aab-${{ github.event.inputs.version_name }}
+          path: app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30

@@ -3,9 +3,12 @@ package com.mobile.data
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import com.mobile.data.db.AppDatabase
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 /**
@@ -15,27 +18,49 @@ import kotlinx.coroutines.launch
  * relevant screen.
  */
 class BootReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
+
+    companion object {
+        private const val TAG = "BootReceiver"
+    }
+
+    private val coroutineExceptionHandler = CoroutineExceptionHandler { _, t ->
+        Log.e(TAG, "Unhandled exception in BootReceiver coroutine", t)
+    }
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + coroutineExceptionHandler)
+
+    override fun onReceive(context: Context?, intent: Intent?) {
+        if (context == null || intent == null) return
+        val action = try { intent.action } catch (_: Throwable) { null }
+        if (action != Intent.ACTION_BOOT_COMPLETED) return
+
         val appContext = context.applicationContext
         try {
             SettingsRepository.init(appContext)
             FinanceRepository.init(appContext)
+            PaymentReminderRepository.init(appContext)
+            CertificateRepository.init(appContext)
             SummaryScheduler.rescheduleAll(appContext, SettingsRepository.summaryFrequencies.value)
         } catch (t: Throwable) {
-            android.util.Log.e("BootReceiver", "Error synchronizing state on boot", t)
+            Log.e(TAG, "Error synchronizing state on boot", t)
         }
 
-        val pendingResult = goAsync()
-        CoroutineScope(Dispatchers.IO).launch {
+        val pendingResult = try { goAsync() } catch (_: Throwable) { null }
+        scope.launch {
             try {
-                AppDatabase.getInstance(appContext).paymentReminderDao().getEnabled().forEach { entity ->
-                    PaymentReminderScheduler.scheduleFor(appContext, entity.id, entity.dueDateMillis, entity.daysBefore)
+                val db = AppDatabase.getInstance(appContext)
+                db.paymentReminderDao().getEnabled().forEach { entity ->
+                    try {
+                        PaymentReminderScheduler.scheduleFor(appContext, entity.id, entity.dueDateMillis, entity.daysBefore)
+                    } catch (t: Throwable) {
+                        Log.e(TAG, "Error rescheduling payment reminder ${entity.id}", t)
+                    }
                 }
             } catch (t: Throwable) {
-                android.util.Log.e("BootReceiver", "Error rescheduling payment reminders on boot", t)
+                Log.e(TAG, "Error rescheduling payment reminders on boot", t)
             } finally {
-                pendingResult.finish()
+                if (pendingResult != null) {
+                    runCatching { pendingResult.finish() }
+                }
             }
         }
     }

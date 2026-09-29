@@ -4,45 +4,72 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import com.mobile.data.db.AppDatabase
 import com.mobile.data.db.toDomain
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 /**
  * Fires on the AlarmManager schedule set by SummaryScheduler.
  * Fast execution: reads cached Room database first in <1ms, falling back to SMS inbox only if empty.
  */
 class SummaryAlarmReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        val frequency = intent.getStringExtra(SummaryScheduler.EXTRA_FREQUENCY) ?: "Daily"
+
+    companion object {
+        private const val TAG = "SummaryAlarmReceiver"
+    }
+
+    private val coroutineExceptionHandler = CoroutineExceptionHandler { _, t ->
+        Log.e(TAG, "Unhandled exception in SummaryAlarmReceiver coroutine", t)
+    }
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + coroutineExceptionHandler)
+
+    override fun onReceive(context: Context?, intent: Intent?) {
+        if (context == null || intent == null) return
         val appContext = context.applicationContext
 
-        SettingsRepository.init(appContext)
-        FinanceRepository.init(appContext)
-
-        if (!SettingsRepository.notificationsEnabled.value) return
-        val windowMillis = SummaryScheduler.intervalMillis(frequency) ?: (24 * 60 * 60 * 1000L)
-
-        // Re-arm next alarm for this recurring frequency
-        if (frequency in SettingsRepository.summaryFrequencies.value) {
-            SummaryScheduler.schedule(appContext, frequency)
+        val frequency = try {
+            intent.getStringExtra(SummaryScheduler.EXTRA_FREQUENCY) ?: "Daily"
+        } catch (_: Throwable) {
+            "Daily"
         }
 
-        val pendingResult = goAsync()
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val since = System.currentTimeMillis() - windowMillis
-                val transactions = loadTransactionsSince(appContext, since)
-                SummaryNotifier.notify(appContext, frequency, transactions)
-            } catch (e: Exception) {
-                // Log and gracefully finish
-            } finally {
-                pendingResult.finish()
+        try {
+            SettingsRepository.init(appContext)
+            FinanceRepository.init(appContext)
+
+            if (!SettingsRepository.notificationsEnabled.value) return
+            val windowMillis = SummaryScheduler.intervalMillis(frequency) ?: (24 * 60 * 60 * 1000L)
+
+            // Re-arm next alarm for this recurring frequency
+            if (frequency in SettingsRepository.summaryFrequencies.value) {
+                try {
+                    SummaryScheduler.schedule(appContext, frequency)
+                } catch (t: Throwable) {
+                    Log.e(TAG, "Error rescheduling summary for $frequency", t)
+                }
             }
+
+            val pendingResult = try { goAsync() } catch (_: Throwable) { null }
+            scope.launch {
+                try {
+                    val since = System.currentTimeMillis() - windowMillis
+                    val transactions = loadTransactionsSince(appContext, since)
+                    SummaryNotifier.notify(appContext, frequency, transactions)
+                } catch (t: Throwable) {
+                    Log.e(TAG, "Error in SummaryAlarmReceiver coroutine", t)
+                } finally {
+                    if (pendingResult != null) {
+                        runCatching { pendingResult.finish() }
+                    }
+                }
+            }
+        } catch (t: Throwable) {
+            Log.e(TAG, "Error in SummaryAlarmReceiver onReceive", t)
         }
     }
 
@@ -57,11 +84,11 @@ class SummaryAlarmReceiver : BroadcastReceiver() {
                     txTimeMillis != null && txTimeMillis >= sinceMillis
                 }
             }
-        } catch (e: Exception) {
-            // fallback below
+        } catch (t: Throwable) {
+            Log.w(TAG, "Failed reading transactions from DB for summary", t)
         }
 
-        // Secondary fallback: Read SMS inbox
+        // Secondary fallback: Read SMS inbox safely
         return readTransactionsFromSms(context, sinceMillis)
     }
 
@@ -79,15 +106,18 @@ class SummaryAlarmReceiver : BroadcastReceiver() {
                 val addressIndex = it.getColumnIndex("address")
                 val bodyIndex = it.getColumnIndex("body")
                 val dateIndex = it.getColumnIndex("date")
-                while (it.moveToNext()) {
-                    val address = it.getString(addressIndex) ?: continue
-                    val body = it.getString(bodyIndex) ?: continue
-                    val date = it.getLong(dateIndex)
-                    SmsParser.parseMessage(address, body, date)?.let(results::add)
+
+                if (addressIndex >= 0 && bodyIndex >= 0 && dateIndex >= 0) {
+                    while (it.moveToNext()) {
+                        val address = it.getString(addressIndex) ?: continue
+                        val body = it.getString(bodyIndex) ?: continue
+                        val date = it.getLong(dateIndex)
+                        SmsParser.parseMessage(address, body, date)?.let(results::add)
+                    }
                 }
             }
-        } catch (e: Exception) {
-            // Permission or content provider error
+        } catch (t: Throwable) {
+            Log.w(TAG, "Permission or content provider error reading SMS fallback", t)
         }
         return results
     }

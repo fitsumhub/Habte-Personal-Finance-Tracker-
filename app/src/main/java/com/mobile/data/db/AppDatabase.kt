@@ -153,6 +153,14 @@ abstract class AppDatabase : RoomDatabase() {
                     )
                 """.trimIndent())
 
+                // 3b. Guarantee no duplicates exist on (bankId, canonicalKey) before creating the unique index
+                db.execSQL("""
+                    DELETE FROM accounts
+                    WHERE id NOT IN (
+                        SELECT MIN(id) FROM accounts GROUP BY bankId, canonicalKey
+                    )
+                """.trimIndent())
+
                 // 4. Add UNIQUE INDEX on (bankId, canonicalKey)
                 db.execSQL(
                     "CREATE UNIQUE INDEX IF NOT EXISTS `index_accounts_bankId_canonicalKey` ON `accounts` (`bankId`, `canonicalKey`)"

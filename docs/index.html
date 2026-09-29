@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Habte – Personal Finance ሀብቴ</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+      color: #e6edf3;
+      min-height: 100vh;
+    }
+    .hero {
+      text-align: center;
+      padding: 80px 20px 60px;
+    }
+    .logo {
+      width: 96px; height: 96px;
+      border-radius: 24px;
+      margin: 0 auto 24px;
+      background: linear-gradient(135deg, #238636, #1f6feb);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 48px;
+    }
+    h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 8px; }
+    .amharic { color: #58a6ff; font-size: 1.1rem; margin-bottom: 16px; }
+    .subtitle { color: #8b949e; font-size: 1.1rem; max-width: 600px; margin: 0 auto 40px; }
+    .badge-row {
+      display: flex; flex-wrap: wrap; gap: 12px;
+      justify-content: center; margin-bottom: 48px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 24px; border-radius: 8px;
+      text-decoration: none; font-weight: 600; font-size: 0.95rem;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: #238636; color: #fff; }
+    .btn-secondary { background: #21262d; color: #e6edf3; border: 1px solid #30363d; }
+    .features {
+      max-width: 1100px; margin: 0 auto; padding: 0 20px 80px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;
+    }
+    .card {
+      background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 24px;
+    }
+    .card-icon { font-size: 2rem; margin-bottom: 12px; }
+    .card h3 { font-size: 1.1rem; margin-bottom: 8px; color: #e6edf3; }
+    .card p { color: #8b949e; font-size: 0.9rem; line-height: 1.6; }
+    footer {
+      text-align: center; padding: 32px 20px;
+      border-top: 1px solid #21262d; color: #8b949e; font-size: 0.85rem;
+    }
+    footer a { color: #58a6ff; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <div class="logo">💰</div>
+    <h1>Habte – Personal Finance</h1>
+    <p class="amharic">ሀብቴ — Your Wealth, Secured 🇪🇹</p>
+    <p class="subtitle">
+      The privacy-first, fully offline finance tracker built for Ethiopia.
+      Automatically reads bank SMS from Telebirr, CBE, BOA, Awash &amp; more.
+    </p>
+    <div class="badge-row">
+      <a class="btn btn-primary" href="https://play.google.com/store/apps/details?id=com.fitsumhub.habtetracker" target="_blank">
+        ▶ Download on Google Play
+      </a>
+      <a class="btn btn-secondary" href="https://github.com/fitsumhub/Habte-Personal-Finance-Tracker-" target="_blank">
+        ⭐ Star on GitHub
+      </a>
+      <a class="btn btn-secondary" href="privacy-policy.html">
+        🔒 Privacy Policy
+      </a>
+    </div>
+  </div>
+
+  <div class="features">
+    <div class="card">
+      <div class="card-icon">🏦</div>
+      <h3>Multi-Bank SMS Parsing</h3>
+      <p>Automatically reads transactions from Telebirr, CBE, BOA, Awash, Dashen and more. Real-time, no manual entry needed.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🛡️</div>
+      <h3>100% Private &amp; Offline</h3>
+      <p>All data stays on your device. No cloud sync, no accounts, no data uploads. Biometric lock protects your finances.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📊</div>
+      <h3>Insights &amp; Analytics</h3>
+      <p>Net worth dashboard, weekly spending charts, budget tracking by category, and CSV export for deep analysis.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔲</div>
+      <h3>Home Screen Widgets</h3>
+      <p>5 beautiful widgets: Net Worth, Weekly Spending, Budget Pulse, Quick Tracker, and Multi-Bank balance at a glance.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🌐</div>
+      <h3>English &amp; Amharic</h3>
+      <p>Full UI localization in English and Amharic (አማርኛ) with Ethiopian date formats and ETB currency.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔔</div>
+      <h3>Payment Reminders</h3>
+      <p>Smart reminders for recurring bills and payments. Never miss a due date again.</p>
+    </div>
+  </div>
+
+  <footer>
+    <p>
+      <a href="privacy-policy.html">Privacy Policy</a> ·
+      <a href="app-ads.txt">app-ads.txt</a> ·
+      <a href="https://github.com/fitsumhub/Habte-Personal-Finance-Tracker-">GitHub</a> ·
+      <a href="https://play.google.com/store/apps/details?id=com.fitsumhub.habtetracker">Google Play</a>
+    </p>
+    <p style="margin-top: 12px;">© 2024 Fitsumhub · Package: com.fitsumhub.habtetracker</p>
+  </footer>
+</body>
+</html>

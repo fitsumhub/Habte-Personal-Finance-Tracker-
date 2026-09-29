@@ -1,4 +1,4 @@
-﻿package com.mobile
+package com.mobile
 
 import android.app.Application
 import android.util.Log
@@ -18,17 +18,17 @@ class HabteApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // 1. Install crash reporter before anything else can execute
         try {
-            // 1. Install crash reporter before anything else can execute
             CrashReporter.install(this)
-
-            // 2. Safely initialize repositories with applicationContext
-            SettingsRepository.init(this)
-            FinanceRepository.init(this)
-            PaymentReminderRepository.init(this)
-            CertificateRepository.init(this)
         } catch (t: Throwable) {
-            Log.e("HabteApplication", "Error during application initialization", t)
+            Log.e("HabteApplication", "Error installing crash reporter", t)
         }
+
+        // 2. Safely initialize repositories independently so failure in one never blocks the others
+        try { SettingsRepository.init(this) } catch (t: Throwable) { Log.e("HabteApplication", "Error initializing SettingsRepository", t) }
+        try { FinanceRepository.init(this) } catch (t: Throwable) { Log.e("HabteApplication", "Error initializing FinanceRepository", t) }
+        try { PaymentReminderRepository.init(this) } catch (t: Throwable) { Log.e("HabteApplication", "Error initializing PaymentReminderRepository", t) }
+        try { CertificateRepository.init(this) } catch (t: Throwable) { Log.e("HabteApplication", "Error initializing CertificateRepository", t) }
     }
 }

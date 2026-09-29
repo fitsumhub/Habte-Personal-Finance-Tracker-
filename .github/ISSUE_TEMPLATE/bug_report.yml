@@ -1,0 +1,97 @@
+name: "🐛 Bug Report"
+description: "Report a crash or unexpected behavior in Habte"
+title: "[BUG] "
+labels: ["bug", "triage"]
+assignees:
+  - fitsumhub
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! Please be as detailed as possible so we can reproduce and fix the issue quickly.
+
+  - type: input
+    id: app-version
+    attributes:
+      label: App Version
+      description: "Find it in Settings > About (e.g., 1.0.2)"
+      placeholder: "e.g., 1.0.2"
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Device & OS
+      description: "Device model and Android version"
+      placeholder: "e.g., Samsung Galaxy A54, Android 14 (One UI 6.1)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: "What happened? What did you expect to happen?"
+      placeholder: "Describe the bug clearly..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: "How can we reproduce this bug?"
+      value: |
+        1. Open the app
+        2. Go to '...'
+        3. Tap '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: dropdown
+    id: bank
+    attributes:
+      label: Bank / Service Affected (if applicable)
+      multiple: true
+      options:
+        - Telebirr
+        - CBE
+        - BOA (Bank of Abyssinia)
+        - Awash Bank
+        - Dashen Bank
+        - Abay Bank
+        - Wegagen Bank
+        - Zemen Bank
+        - Other
+        - Not applicable
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: How often does this happen?
+      options:
+        - Always (100%)
+        - Often (>50%)
+        - Sometimes (<50%)
+        - Rarely (first time)
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Crash Logs / Logcat (optional)
+      description: "Paste any crash logs or logcat output here"
+      render: shell
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing issues and this is not a duplicate
+          required: true
+        - label: I am using the latest version of the app
+          required: true

@@ -5,8 +5,10 @@ import android.content.Context
 import android.content.Intent
 import com.mobile.data.db.AppDatabase
 import com.mobile.data.db.toDomain
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -19,14 +21,28 @@ import java.util.Calendar
  * alarm clock alarm turns itself off after ringing).
  */
 class PaymentReminderReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
+
+    private val coroutineExceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        android.util.Log.e("PaymentReminderReceiver", "Unhandled exception in payment reminder receiver", throwable)
+    }
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + coroutineExceptionHandler)
+
+    override fun onReceive(context: Context?, intent: Intent?) {
+        if (context == null || intent == null) return
+        val appContext = context.applicationContext ?: return
+
         val reminderId = intent.getLongExtra(PaymentReminderScheduler.EXTRA_REMINDER_ID, -1L)
         if (reminderId <= 0) return
-        val appContext = context.applicationContext
-        SettingsRepository.init(appContext)
+
+        try {
+            SettingsRepository.init(appContext)
+            PaymentReminderRepository.init(appContext)
+        } catch (t: Throwable) {
+            android.util.Log.e("PaymentReminderReceiver", "Failed to init repositories", t)
+        }
 
         val pendingResult = goAsync()
-        CoroutineScope(Dispatchers.IO).launch {
+        scope.launch {
             try {
                 val dao = AppDatabase.getInstance(appContext).paymentReminderDao()
                 val entity = dao.getById(reminderId) ?: return@launch
@@ -48,7 +64,7 @@ class PaymentReminderReceiver : BroadcastReceiver() {
             } catch (t: Throwable) {
                 android.util.Log.e("PaymentReminderReceiver", "Error handling payment reminder $reminderId", t)
             } finally {
-                pendingResult.finish()
+                kotlin.runCatching { pendingResult.finish() }
             }
         }
     }

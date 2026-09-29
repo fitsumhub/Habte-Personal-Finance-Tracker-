@@ -115,13 +115,17 @@ fun HomeScreen(onNavigateToProfile: () -> Unit, onNavigateToTransactionHistory: 
         try {
             val result = FinanceRepository.syncHistoricalSms(context, fullResync = true)
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            Toast.makeText(
-                context,
-                "Master Refresh Complete: Scanned ${result.smsScanned} SMS messages, parsed ${result.transactionsParsed} records across ${result.bankCount} banks!",
-                Toast.LENGTH_LONG
-            ).show()
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                Toast.makeText(
+                    context,
+                    "Master Refresh Complete: Scanned ${result.smsScanned} SMS messages, parsed ${result.transactionsParsed} records across ${result.bankCount} banks!",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
         } catch (e: Exception) {
-            Toast.makeText(context, "Master Sync complete", Toast.LENGTH_SHORT).show()
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                Toast.makeText(context, "Master Sync complete", Toast.LENGTH_SHORT).show()
+            }
         } finally {
             isSyncing = false
         }
@@ -135,7 +139,9 @@ fun HomeScreen(onNavigateToProfile: () -> Unit, onNavigateToTransactionHistory: 
             com.mobile.data.SmsObserver.register(context)
             coroutineScope.launch { runSync() }
         } else {
-            Toast.makeText(context, "SMS Permission denied. Cannot auto-categorize.", Toast.LENGTH_SHORT).show()
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                Toast.makeText(context, "SMS Permission denied. Cannot auto-categorize.", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 

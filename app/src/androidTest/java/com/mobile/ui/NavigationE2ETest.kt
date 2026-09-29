@@ -42,6 +42,8 @@ class NavigationE2ETest {
         }
         // Home screen shows "Welcome back,"
         composeTestRule.onNodeWithText("Welcome back,").assertExists()
+        // Home screen shows financial overview subtitle
+        composeTestRule.onNode(hasText("financial overview", substring = true)).assertExists()
     }
 
     @Test
@@ -54,6 +56,8 @@ class NavigationE2ETest {
         composeTestRule.waitForIdle()
         // Verify analytics-specific content ("Transactions" section header is unique to analytics)
         composeTestRule.onNodeWithText("Transactions").assertExists()
+        // "Monthly Breakdown" is unique to the analytics screen
+        composeTestRule.onNodeWithText("Monthly Breakdown").assertExists()
     }
 
     @Test
@@ -76,17 +80,34 @@ class NavigationE2ETest {
         composeTestRule.waitForIdle()
         // "Workspace" is the tools screen header
         composeTestRule.onNodeWithText("Workspace").assertExists()
+        // "Financial Workspace" is the tools screen header
+        composeTestRule.onNodeWithText("Financial Workspace").assertExists()
     }
 
     @Test
     fun navigateTo_settings() {
+    fun navigateTo_transactions() {
         composeTestRule.setContent {
             AppTheme { AppNavigation() }
         }
         composeTestRule.onNodeWithContentDescription("Settings").performClick()
+        composeTestRule.onNodeWithContentDescription("Transactions").performClick()
         composeTestRule.waitForIdle()
         // Use SECURITY group header which is unique to the settings screen
         composeTestRule.onNodeWithText("SECURITY").assertExists()
+        // Bottom nav has "Transactions" and screen title is "Transactions"
+        composeTestRule.onAllNodesWithText("Transactions").onFirst().assertExists()
+    }
+
+    @Test
+    fun navigateTo_profile() {
+        composeTestRule.setContent {
+            AppTheme { AppNavigation() }
+        }
+        composeTestRule.onNodeWithContentDescription("Profile").performClick()
+        composeTestRule.waitForIdle()
+        // Profile & Account header is unique to profile screen
+        composeTestRule.onNodeWithText("Profile & Account").assertExists()
     }
 
     @Test
@@ -95,6 +116,7 @@ class NavigationE2ETest {
             AppTheme { AppNavigation() }
         }
         // Go to budget (no duplicate text issue)
+        // Go to budget
         composeTestRule.onNodeWithContentDescription("Budget").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Budget & Expenses").assertExists()
@@ -103,6 +125,7 @@ class NavigationE2ETest {
         composeTestRule.onNodeWithContentDescription("Home").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Welcome back,").assertExists()
+        composeTestRule.onNode(hasText("financial overview", substring = true)).assertExists()
     }
 
     // ── Tools Sub-Navigation ─────────────────────────────────────────────
@@ -118,6 +141,8 @@ class NavigationE2ETest {
 
         // Tap the support banner — use the Support icon's content description
         composeTestRule.onNodeWithContentDescription("Support").performClick()
+        // Tap the support banner
+        composeTestRule.onNodeWithText("Habte Support & Guides").performClick()
         composeTestRule.waitForIdle()
 
         // Should be on support screen — "We're here to help!" is unique
@@ -125,27 +150,34 @@ class NavigationE2ETest {
     }
 
     // ── Settings Content ─────────────────────────────────────────────────
+    // ── Profile Content ─────────────────────────────────────────────────
 
     @Test
     fun settings_showsSecurityGroup() {
+    fun profile_showsExecutiveCertificates() {
         composeTestRule.setContent {
             AppTheme { AppNavigation() }
         }
         composeTestRule.onNodeWithContentDescription("Settings").performClick()
+        composeTestRule.onNodeWithContentDescription("Profile").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("SECURITY").assertExists()
         composeTestRule.onNodeWithText("Biometric Login").assertExists()
+        composeTestRule.onNodeWithText("Executive Certificates").assertExists()
     }
 
     @Test
     fun settings_showsPreferencesGroup() {
+    fun profile_showsSettingsSubtitle() {
         composeTestRule.setContent {
             AppTheme { AppNavigation() }
         }
         composeTestRule.onNodeWithContentDescription("Settings").performClick()
+        composeTestRule.onNodeWithContentDescription("Profile").performClick()
         composeTestRule.waitForIdle()
         // PREFERENCES might be below scroll fold — just check it exists in the tree
         composeTestRule.onNodeWithText("PREFERENCES").assertExists()
+        composeTestRule.onNodeWithText("Executive Settings & Security").assertExists()
     }
 
     // ── Home Screen Content ──────────────────────────────────────────────
@@ -176,11 +208,15 @@ class NavigationE2ETest {
             AppTheme { AppNavigation() }
         }
         // All nav items should be present via their content descriptions
+        // All 6 nav items should be present via their content descriptions
         composeTestRule.onNodeWithContentDescription("Home").assertExists()
+        composeTestRule.onNodeWithContentDescription("Tools").assertExists()
+        composeTestRule.onNodeWithContentDescription("Transactions").assertExists()
         composeTestRule.onNodeWithContentDescription("Analytics").assertExists()
         composeTestRule.onNodeWithContentDescription("Budget").assertExists()
         composeTestRule.onNodeWithContentDescription("Tools").assertExists()
         composeTestRule.onNodeWithContentDescription("Settings").assertExists()
+        composeTestRule.onNodeWithContentDescription("Profile").assertExists()
     }
 
     // ── Round Trip Navigation ────────────────────────────────────────────
@@ -192,18 +228,31 @@ class NavigationE2ETest {
         }
         // Home → Analytics → Budget → Tools → Settings → Home
         composeTestRule.onNodeWithText("Welcome back,").assertExists()
+        // Home → Tools → Transactions → Analytics → Budget → Profile → Home
+        composeTestRule.onNode(hasText("financial overview", substring = true)).assertExists()
+
+        composeTestRule.onNodeWithContentDescription("Tools").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Financial Workspace").assertExists()
+
+        composeTestRule.onNodeWithContentDescription("Transactions").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onAllNodesWithText("Transactions").onFirst().assertExists()
 
         composeTestRule.onNodeWithContentDescription("Analytics").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Transactions").assertExists()
+        composeTestRule.onNodeWithText("Monthly Breakdown").assertExists()
 
         composeTestRule.onNodeWithContentDescription("Budget").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Budget & Expenses").assertExists()
 
         composeTestRule.onNodeWithContentDescription("Tools").performClick()
+        composeTestRule.onNodeWithContentDescription("Profile").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Workspace").assertExists()
+        composeTestRule.onNodeWithText("Profile & Account").assertExists()
 
         composeTestRule.onNodeWithContentDescription("Settings").performClick()
         composeTestRule.waitForIdle()
@@ -212,5 +261,6 @@ class NavigationE2ETest {
         composeTestRule.onNodeWithContentDescription("Home").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Welcome back,").assertExists()
+        composeTestRule.onNode(hasText("financial overview", substring = true)).assertExists()
     }
 }

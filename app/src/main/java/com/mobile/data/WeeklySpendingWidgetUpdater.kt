@@ -82,9 +82,10 @@ object WeeklySpendingWidgetUpdater {
 
     // ── Style 1: Daily Digest & Weekly Budget (4x2) ────────────────────────────────────
     fun updateWidgets(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
+        val appContext = context.applicationContext ?: context
         scope.launch {
             try {
-                val db = AppDatabase.getInstance(context)
+                val db = AppDatabase.getInstance(appContext)
                 val transactions = db.transactionDao().observeAll().first().map { it.toDomain() }
                 val budgets = db.budgetDao().observeAll().first().map { it.toDomain() }
 
@@ -118,41 +119,48 @@ object WeeklySpendingWidgetUpdater {
                 val dateLabel = "This Week · ${dayFormat.format(now.time)}"
 
                 appWidgetIds.forEach { widgetId ->
-                    val views = RemoteViews(context.packageName, R.layout.widget_weekly_spending_digest)
+                    try {
+                        val views = RemoteViews(appContext.packageName, R.layout.widget_weekly_spending_digest)
 
-                    views.setTextViewText(R.id.widget_today_outflow, "ETB ${Data.formatBalance(todayOutflow)}")
-                    views.setTextViewText(R.id.widget_week_outflow, "ETB ${Data.formatBalance(weekOutflow)}")
-                    views.setTextViewText(
-                        R.id.widget_budget_label,
-                        "Budget: ETB ${Data.formatBalance(weekOutflow)} / ${Data.formatBalance(weeklyBudget)}"
-                    )
-                    views.setTextViewText(R.id.widget_budget_status, statusText)
-                    views.setTextColor(R.id.widget_budget_status, statusColor)
-                    views.setTextViewText(R.id.widget_date_label, dateLabel)
-                    views.setProgressBar(R.id.widget_budget_progress, 100, progressPercent, false)
+                        views.setTextViewText(R.id.widget_today_outflow, "ETB ${Data.formatBalance(todayOutflow)}")
+                        views.setTextViewText(R.id.widget_week_outflow, "ETB ${Data.formatBalance(weekOutflow)}")
+                        views.setTextViewText(
+                            R.id.widget_budget_label,
+                            "Budget: ETB ${Data.formatBalance(weekOutflow)} / ${Data.formatBalance(weeklyBudget)}"
+                        )
+                        views.setTextViewText(R.id.widget_budget_status, statusText)
+                        views.setTextColor(R.id.widget_budget_status, statusColor)
+                        views.setTextViewText(R.id.widget_date_label, dateLabel)
+                        views.setProgressBar(R.id.widget_budget_progress, 100, progressPercent, false)
 
-                    views.setOnClickPendingIntent(R.id.widget_root, pendingOpenAppIntent(context, widgetId))
+                        views.setOnClickPendingIntent(R.id.widget_root, pendingOpenAppIntent(appContext, widgetId))
 
-                    val refreshIntent = Intent(context, WeeklySpendingWidgetProvider::class.java).apply {
-                        action = WeeklySpendingWidgetProvider.ACTION_REFRESH_WIDGET
+                        val refreshIntent = Intent(appContext, WeeklySpendingWidgetProvider::class.java).apply {
+                            action = WeeklySpendingWidgetProvider.ACTION_REFRESH_WIDGET
+                        }
+                        val refreshPendingIntent = PendingIntent.getBroadcast(
+                            appContext, widgetId, refreshIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                        )
+                        views.setOnClickPendingIntent(R.id.widget_btn_refresh, refreshPendingIntent)
+
+                        appWidgetManager.updateAppWidget(widgetId, views)
+                    } catch (t: Throwable) {
+                        Log.e("WidgetUpdater", "Failed to update widget $widgetId", t)
                     }
-                    val refreshPendingIntent = PendingIntent.getBroadcast(
-                        context, widgetId, refreshIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                    )
-                    views.setOnClickPendingIntent(R.id.widget_btn_refresh, refreshPendingIntent)
-
-                    appWidgetManager.updateAppWidget(widgetId, views)
                 }
-            } catch (_: Exception) {}
+            } catch (t: Throwable) {
+                Log.e("WidgetUpdater", "Error in updateWidgets", t)
+            }
         }
     }
 
     // ── Style 2: Net Worth & Financial Health (2x2) ──────────────────────────────────
     private fun updateNetWorthWidgets(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
+        val appContext = context.applicationContext ?: context
         scope.launch {
             try {
-                val db = AppDatabase.getInstance(context)
+                val db = AppDatabase.getInstance(appContext)
                 val bankEntities = db.bankDao().observeAllWithAccounts().first()
                 val banks = bankEntities.map { it.toDomain() }
                 val transactions = db.transactionDao().observeAll().first().map { it.toDomain() }
@@ -171,120 +179,141 @@ object WeeklySpendingWidgetUpdater {
                 val netSign = if (monthNet >= 0) "+" else "-"
 
                 appWidgetIds.forEach { widgetId ->
-                    val views = RemoteViews(context.packageName, R.layout.widget_net_worth_card)
-                    views.setTextViewText(R.id.widget_net_worth_value, "ETB ${Data.formatBalance(netWorth)}")
-                    views.setTextViewText(R.id.widget_bank_stats, "$bankCount Synced Banks · $accountCount Accounts")
-                    views.setTextViewText(R.id.widget_cashflow_text, "$netSign ETB ${Data.formatBalance(kotlin.math.abs(monthNet))}")
-                    views.setTextColor(R.id.widget_cashflow_text, if (monthNet >= 0) Color.parseColor("#34D399") else Color.parseColor("#F87171"))
+                    try {
+                        val views = RemoteViews(appContext.packageName, R.layout.widget_net_worth_card)
+                        views.setTextViewText(R.id.widget_net_worth_value, "ETB ${Data.formatBalance(netWorth)}")
+                        views.setTextViewText(R.id.widget_bank_stats, "$bankCount Synced Banks · $accountCount Accounts")
+                        views.setTextViewText(R.id.widget_cashflow_text, "$netSign ETB ${Data.formatBalance(kotlin.math.abs(monthNet))}")
+                        views.setTextColor(R.id.widget_cashflow_text, if (monthNet >= 0) Color.parseColor("#34D399") else Color.parseColor("#F87171"))
 
-                    views.setOnClickPendingIntent(R.id.widget_root, pendingOpenAppIntent(context, widgetId + 2000))
+                        views.setOnClickPendingIntent(R.id.widget_root, pendingOpenAppIntent(appContext, widgetId + 2000))
 
-                    val refreshIntent = Intent(context, NetWorthWidgetProvider::class.java).apply {
-                        action = NetWorthWidgetProvider.ACTION_REFRESH_WIDGET
+                        val refreshIntent = Intent(appContext, NetWorthWidgetProvider::class.java).apply {
+                            action = NetWorthWidgetProvider.ACTION_REFRESH_WIDGET
+                        }
+                        val refreshPendingIntent = PendingIntent.getBroadcast(
+                            appContext, widgetId, refreshIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                        )
+                        views.setOnClickPendingIntent(R.id.widget_btn_refresh, refreshPendingIntent)
+
+                        appWidgetManager.updateAppWidget(widgetId, views)
+                    } catch (t: Throwable) {
+                        Log.e("WidgetUpdater", "Failed to update net worth widget $widgetId", t)
                     }
-                    val refreshPendingIntent = PendingIntent.getBroadcast(
-                        context, widgetId, refreshIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                    )
-                    views.setOnClickPendingIntent(R.id.widget_btn_refresh, refreshPendingIntent)
-
-                    appWidgetManager.updateAppWidget(widgetId, views)
                 }
-            } catch (_: Exception) {}
+            } catch (t: Throwable) {
+                Log.e("WidgetUpdater", "Error in updateNetWorthWidgets", t)
+            }
         }
     }
 
     // ── Style 3: Quick Action & Transaction Tracker (4x1) ────────────────────────────
     private fun updateQuickTrackerWidgets(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
+        val appContext = context.applicationContext ?: context
         scope.launch {
             try {
-                val db = AppDatabase.getInstance(context)
+                val db = AppDatabase.getInstance(appContext)
                 val transactions = db.transactionDao().observeAll().first().map { it.toDomain() }
                 val latestTx = transactions.firstOrNull()
 
                 appWidgetIds.forEach { widgetId ->
-                    val views = RemoteViews(context.packageName, R.layout.widget_quick_tracker)
-                    if (latestTx != null) {
-                        views.setTextViewText(R.id.widget_tx_title, latestTx.title)
-                        views.setTextViewText(R.id.widget_tx_sub, "${latestTx.bankShortName} · ${latestTx.date}")
-                        views.setTextViewText(R.id.widget_tx_amount, "ETB ${Data.formatBalance(latestTx.amount)}")
-                        val isCredit = latestTx.type == "credit"
-                        views.setTextColor(R.id.widget_tx_amount, if (isCredit) Color.parseColor("#34D399") else Color.parseColor("#F87171"))
-                    } else {
-                        views.setTextViewText(R.id.widget_tx_title, "No Activity")
-                        views.setTextViewText(R.id.widget_tx_sub, "Sync banks to see live transactions")
-                        views.setTextViewText(R.id.widget_tx_amount, "ETB 0.00")
+                    try {
+                        val views = RemoteViews(appContext.packageName, R.layout.widget_quick_tracker)
+                        if (latestTx != null) {
+                            views.setTextViewText(R.id.widget_tx_title, latestTx.title)
+                            views.setTextViewText(R.id.widget_tx_sub, "${latestTx.bankShortName} · ${latestTx.date}")
+                            views.setTextViewText(R.id.widget_tx_amount, "ETB ${Data.formatBalance(latestTx.amount)}")
+                            val isCredit = latestTx.type == "credit"
+                            views.setTextColor(R.id.widget_tx_amount, if (isCredit) Color.parseColor("#34D399") else Color.parseColor("#F87171"))
+                        } else {
+                            views.setTextViewText(R.id.widget_tx_title, "No Activity")
+                            views.setTextViewText(R.id.widget_tx_sub, "Sync banks to see live transactions")
+                            views.setTextViewText(R.id.widget_tx_amount, "ETB 0.00")
+                        }
+
+                        views.setOnClickPendingIntent(R.id.widget_root, pendingOpenAppIntent(appContext, widgetId + 3000))
+
+                        val refreshIntent = Intent(appContext, QuickTrackerWidgetProvider::class.java).apply {
+                            action = QuickTrackerWidgetProvider.ACTION_REFRESH_WIDGET
+                        }
+                        val refreshPendingIntent = PendingIntent.getBroadcast(
+                            appContext, widgetId, refreshIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                        )
+                        views.setOnClickPendingIntent(R.id.widget_btn_refresh, refreshPendingIntent)
+
+                        appWidgetManager.updateAppWidget(widgetId, views)
+                    } catch (t: Throwable) {
+                        Log.e("WidgetUpdater", "Failed to update quick tracker widget $widgetId", t)
                     }
-
-                    views.setOnClickPendingIntent(R.id.widget_root, pendingOpenAppIntent(context, widgetId + 3000))
-
-                    val refreshIntent = Intent(context, QuickTrackerWidgetProvider::class.java).apply {
-                        action = QuickTrackerWidgetProvider.ACTION_REFRESH_WIDGET
-                    }
-                    val refreshPendingIntent = PendingIntent.getBroadcast(
-                        context, widgetId, refreshIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                    )
-                    views.setOnClickPendingIntent(R.id.widget_btn_refresh, refreshPendingIntent)
-
-                    appWidgetManager.updateAppWidget(widgetId, views)
                 }
-            } catch (_: Exception) {}
+            } catch (t: Throwable) {
+                Log.e("WidgetUpdater", "Error in updateQuickTrackerWidgets", t)
+            }
         }
     }
 
     // ── Style 4: Multi-Bank Account Balances (4x3 Grid) ──────────────────────────────
     private fun updateMultiBankWidgets(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
+        val appContext = context.applicationContext ?: context
         scope.launch {
             try {
-                val db = AppDatabase.getInstance(context)
+                val db = AppDatabase.getInstance(appContext)
                 val bankEntities = db.bankDao().observeAllWithAccounts().first()
                 val banks = bankEntities.map { it.toDomain() }
                 val totalBalance = Data.getTotalBalance(banks)
 
                 appWidgetIds.forEach { widgetId ->
-                    val views = RemoteViews(context.packageName, R.layout.widget_multi_bank)
-                    views.setTextViewText(R.id.widget_total_balance_text, "Total: ETB ${Data.formatBalance(totalBalance)}")
+                    try {
+                        val views = RemoteViews(appContext.packageName, R.layout.widget_multi_bank)
+                        views.setTextViewText(R.id.widget_total_balance_text, "Total: ETB ${Data.formatBalance(totalBalance)}")
 
-                    val bank1 = banks.getOrNull(0)
-                    val bank2 = banks.getOrNull(1)
-                    val bank3 = banks.getOrNull(2)
-                    val bank4 = banks.getOrNull(3)
+                        val bank1 = banks.getOrNull(0)
+                        val bank2 = banks.getOrNull(1)
+                        val bank3 = banks.getOrNull(2)
+                        val bank4 = banks.getOrNull(3)
 
-                    views.setTextViewText(R.id.widget_bank_1_name, bank1?.shortName ?: "CBE")
-                    views.setTextViewText(R.id.widget_bank_1_balance, "ETB ${Data.formatBalance(bank1?.let { Data.getBankTotal(it) } ?: 0.0)}")
+                        views.setTextViewText(R.id.widget_bank_1_name, bank1?.shortName ?: "CBE")
+                        views.setTextViewText(R.id.widget_bank_1_balance, "ETB ${Data.formatBalance(bank1?.let { Data.getBankTotal(it) } ?: 0.0)}")
 
-                    views.setTextViewText(R.id.widget_bank_2_name, bank2?.shortName ?: "Telebirr")
-                    views.setTextViewText(R.id.widget_bank_2_balance, "ETB ${Data.formatBalance(bank2?.let { Data.getBankTotal(it) } ?: 0.0)}")
+                        views.setTextViewText(R.id.widget_bank_2_name, bank2?.shortName ?: "Telebirr")
+                        views.setTextViewText(R.id.widget_bank_2_balance, "ETB ${Data.formatBalance(bank2?.let { Data.getBankTotal(it) } ?: 0.0)}")
 
-                    views.setTextViewText(R.id.widget_bank_3_name, bank3?.shortName ?: "BOA")
-                    views.setTextViewText(R.id.widget_bank_3_balance, "ETB ${Data.formatBalance(bank3?.let { Data.getBankTotal(it) } ?: 0.0)}")
+                        views.setTextViewText(R.id.widget_bank_3_name, bank3?.shortName ?: "BOA")
+                        views.setTextViewText(R.id.widget_bank_3_balance, "ETB ${Data.formatBalance(bank3?.let { Data.getBankTotal(it) } ?: 0.0)}")
 
-                    views.setTextViewText(R.id.widget_bank_4_name, bank4?.shortName ?: "Dashen")
-                    views.setTextViewText(R.id.widget_bank_4_balance, "ETB ${Data.formatBalance(bank4?.let { Data.getBankTotal(it) } ?: 0.0)}")
+                        views.setTextViewText(R.id.widget_bank_4_name, bank4?.shortName ?: "Dashen")
+                        views.setTextViewText(R.id.widget_bank_4_balance, "ETB ${Data.formatBalance(bank4?.let { Data.getBankTotal(it) } ?: 0.0)}")
 
-                    views.setOnClickPendingIntent(R.id.widget_root, pendingOpenAppIntent(context, widgetId + 4000))
+                        views.setOnClickPendingIntent(R.id.widget_root, pendingOpenAppIntent(appContext, widgetId + 4000))
 
-                    val refreshIntent = Intent(context, MultiBankWidgetProvider::class.java).apply {
-                        action = MultiBankWidgetProvider.ACTION_REFRESH_WIDGET
+                        val refreshIntent = Intent(appContext, MultiBankWidgetProvider::class.java).apply {
+                            action = MultiBankWidgetProvider.ACTION_REFRESH_WIDGET
+                        }
+                        val refreshPendingIntent = PendingIntent.getBroadcast(
+                            appContext, widgetId, refreshIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                        )
+                        views.setOnClickPendingIntent(R.id.widget_btn_refresh, refreshPendingIntent)
+
+                        appWidgetManager.updateAppWidget(widgetId, views)
+                    } catch (t: Throwable) {
+                        Log.e("WidgetUpdater", "Failed to update multi bank widget $widgetId", t)
                     }
-                    val refreshPendingIntent = PendingIntent.getBroadcast(
-                        context, widgetId, refreshIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                    )
-                    views.setOnClickPendingIntent(R.id.widget_btn_refresh, refreshPendingIntent)
-
-                    appWidgetManager.updateAppWidget(widgetId, views)
                 }
-            } catch (_: Exception) {}
+            } catch (t: Throwable) {
+                Log.e("WidgetUpdater", "Error in updateMultiBankWidgets", t)
+            }
         }
     }
 
     // ── Style 5: Budget Pulse & Daily Allowance (2x1 Capsule) ────────────────────────
     private fun updateBudgetPulseWidgets(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
+        val appContext = context.applicationContext ?: context
         scope.launch {
             try {
-                val db = AppDatabase.getInstance(context)
+                val db = AppDatabase.getInstance(appContext)
                 val transactions = db.transactionDao().observeAll().first().map { it.toDomain() }
                 val budgets = db.budgetDao().observeAll().first().map { it.toDomain() }
 
@@ -302,15 +331,21 @@ object WeeklySpendingWidgetUpdater {
                 val statusColor = if (remainingAllowance > 0) Color.parseColor("#34D399") else Color.parseColor("#F87171")
 
                 appWidgetIds.forEach { widgetId ->
-                    val views = RemoteViews(context.packageName, R.layout.widget_budget_pulse)
-                    views.setTextViewText(R.id.widget_allowance_text, "ETB ${Data.formatBalance(remainingAllowance)} Left")
-                    views.setTextViewText(R.id.widget_pulse_badge, statusText)
-                    views.setTextColor(R.id.widget_pulse_badge, statusColor)
+                    try {
+                        val views = RemoteViews(appContext.packageName, R.layout.widget_budget_pulse)
+                        views.setTextViewText(R.id.widget_allowance_text, "ETB ${Data.formatBalance(remainingAllowance)} Left")
+                        views.setTextViewText(R.id.widget_pulse_badge, statusText)
+                        views.setTextColor(R.id.widget_pulse_badge, statusColor)
 
-                    views.setOnClickPendingIntent(R.id.widget_root, pendingOpenAppIntent(context, widgetId + 5000))
-                    appWidgetManager.updateAppWidget(widgetId, views)
+                        views.setOnClickPendingIntent(R.id.widget_root, pendingOpenAppIntent(appContext, widgetId + 5000))
+                        appWidgetManager.updateAppWidget(widgetId, views)
+                    } catch (t: Throwable) {
+                        Log.e("WidgetUpdater", "Failed to update budget pulse widget $widgetId", t)
+                    }
                 }
-            } catch (_: Exception) {}
+            } catch (t: Throwable) {
+                Log.e("WidgetUpdater", "Error in updateBudgetPulseWidgets", t)
+            }
         }
     }
 }

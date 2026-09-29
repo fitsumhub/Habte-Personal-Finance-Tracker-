@@ -6,8 +6,10 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
 import com.mobile.data.db.AppDatabase
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 /**
@@ -18,10 +20,18 @@ import kotlinx.coroutines.launch
  * run in a fresh process after the app was fully killed.
  */
 class PaymentReminderActionReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
+
+    private val coroutineExceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        android.util.Log.e("PaymentReminderAction", "Unhandled exception in payment reminder action receiver", throwable)
+    }
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + coroutineExceptionHandler)
+
+    override fun onReceive(context: Context?, intent: Intent?) {
+        if (context == null || intent == null) return
+        val appContext = context.applicationContext ?: return
+
         val reminderId = intent.getLongExtra(PaymentReminderScheduler.EXTRA_REMINDER_ID, -1L)
         if (reminderId <= 0) return
-        val appContext = context.applicationContext
 
         try {
             NotificationManagerCompat.from(appContext).cancel(PaymentReminderNotifier.notificationIdFor(reminderId))
@@ -30,7 +40,7 @@ class PaymentReminderActionReceiver : BroadcastReceiver() {
         }
 
         val pendingResult = goAsync()
-        CoroutineScope(Dispatchers.IO).launch {
+        scope.launch {
             try {
                 val dao = AppDatabase.getInstance(appContext).paymentReminderDao()
                 val entity = dao.getById(reminderId) ?: return@launch
@@ -38,7 +48,7 @@ class PaymentReminderActionReceiver : BroadcastReceiver() {
             } catch (t: Throwable) {
                 android.util.Log.e("PaymentReminderAction", "Error marking reminder paid", t)
             } finally {
-                pendingResult.finish()
+                kotlin.runCatching { pendingResult.finish() }
             }
         }
 

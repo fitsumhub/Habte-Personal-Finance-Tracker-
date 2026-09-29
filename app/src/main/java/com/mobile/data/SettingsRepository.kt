@@ -3,17 +3,20 @@ package com.mobile.data
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Base64
+import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import java.security.SecureRandom
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 
 object SettingsRepository {
+    private const val TAG = "SettingsRepository"
     private const val PREFS_NAME = "habte_settings"
-    private lateinit var prefs: SharedPreferences
+
+    @Volatile
+    private var prefsInstance: SharedPreferences? = null
 
     private val _biometricEnabled = MutableStateFlow(true)
     val biometricEnabled: StateFlow<Boolean> = _biometricEnabled.asStateFlow()
@@ -50,23 +53,11 @@ object SettingsRepository {
     private val _hasSeenOnboarding = MutableStateFlow(false)
     val hasSeenOnboarding: StateFlow<Boolean> = _hasSeenOnboarding.asStateFlow()
 
-    // Master switch for NotificationCaptureListenerService — on by default so capture starts
-    // working automatically as soon as the user grants the OS-level notification access
-    // permission (that permission grant is itself the real consent gate; Android requires it
-    // to be a deliberate action in system Settings, so this switch doesn't need to duplicate
-    // it). Still exposed as a toggle so the user can fully disable capture without having to
-    // revoke system-level notification access to do it.
+    // Master switch for NotificationCaptureListenerService
     private val _notificationCaptureEnabled = MutableStateFlow(true)
     val notificationCaptureEnabled: StateFlow<Boolean> = _notificationCaptureEnabled.asStateFlow()
 
-    // Installed bank/wallet apps being monitored, packageName -> InstitutionCatalog id (see
-    // NotificationCaptureScreen / InstalledBankAppMatcher). Keyed on package name so
-    // NotificationCaptureListenerService can resolve which institution a notification belongs
-    // to without touching PackageManager at notification time. A notification from any other
-    // app is never inspected, regardless of notificationCaptureEnabled. Populated
-    // automatically by autoEnableDetectedApps() — every matching bank/wallet app found on the
-    // device is monitored by default, not opt-in per app; the user can still uncheck one in
-    // NotificationCaptureScreen to stop monitoring it.
+    // Installed bank/wallet apps being monitored, packageName -> InstitutionCatalog id
     private val _monitoredApps = MutableStateFlow<Map<String, String>>(emptyMap())
     val monitoredApps: StateFlow<Map<String, String>> = _monitoredApps.asStateFlow()
 
@@ -82,13 +73,9 @@ object SettingsRepository {
     private val _lastSmsSyncTimestamp = MutableStateFlow(0L)
     val lastSmsSyncTimestamp: StateFlow<Long> = _lastSmsSyncTimestamp.asStateFlow()
 
-    // Zero or more of: "Every 12 Hours", "Daily", "Weekly", "Every 15 Days", "Monthly" —
-    // each selected frequency gets its own independent recurring summary notification.
     private val _summaryFrequencies = MutableStateFlow(setOf("Daily"))
     val summaryFrequencies: StateFlow<Set<String>> = _summaryFrequencies.asStateFlow()
 
-    // Epoch millis until which banner/interstitial ads are suppressed, earned by watching
-    // a rewarded ad (see AdMobService.showRewardedIfLoaded). 0 means no active grant.
     private val _adFreeUntilMillis = MutableStateFlow(0L)
     val adFreeUntilMillis: StateFlow<Long> = _adFreeUntilMillis.asStateFlow()
 
@@ -104,17 +91,31 @@ object SettingsRepository {
     private val _profileAvatarRing = MutableStateFlow("Emerald")
     val profileAvatarRing: StateFlow<String> = _profileAvatarRing.asStateFlow()
 
-    /** True while an ad-free grant from a watched rewarded ad is still active. */
+    @Volatile
     private var applicationContext: Context? = null
 
     fun isAdFreeActive(): Boolean = System.currentTimeMillis() < _adFreeUntilMillis.value
+
+    fun getPrefs(context: Context? = null): SharedPreferences? {
+        return prefsInstance ?: synchronized(this) {
+            prefsInstance ?: (context ?: applicationContext)?.let { ctx ->
+                try {
+                    ctx.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).also {
+                        prefsInstance = it
+                    }
+                } catch (t: Throwable) {
+                    Log.e(TAG, "Error obtaining SharedPreferences instance", t)
+                    null
+                }
+            }
+        }
+    }
 
     @Synchronized
     fun init(context: Context) {
         try {
             applicationContext = context.applicationContext
-            if (::prefs.isInitialized) return
-            prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val prefs = getPrefs(context) ?: return
             _biometricEnabled.value = prefs.getBoolean("biometric", true)
             _autoHideBalances.value = prefs.getBoolean("auto_hide", false)
             _privacyMode.value = prefs.getBoolean("privacy_mode", false)
@@ -144,37 +145,48 @@ object SettingsRepository {
             _hiddenAccountIds.value = prefs.getStringSet("hidden_account_ids", emptySet())?.toSet() ?: emptySet()
             _profileAvatarRing.value = prefs.getString("profile_avatar_ring", "Emerald") ?: "Emerald"
         } catch (t: Throwable) {
-            android.util.Log.e("SettingsRepository", "Error initializing settings", t)
+            Log.e(TAG, "Error initializing settings", t)
         }
     }
 
     private fun safeEdit(action: SharedPreferences.Editor.() -> Unit) {
         try {
-            if (::prefs.isInitialized) {
-                val editor = prefs.edit()
-                editor.action()
-                editor.apply()
-            }
+            val prefs = getPrefs(applicationContext) ?: return
+            val editor = prefs.edit()
+            editor.action()
+            editor.apply()
         } catch (t: Throwable) {
-            android.util.Log.e("SettingsRepository", "Error saving preference", t)
+            Log.e(TAG, "Error saving preference", t)
         }
     }
 
     fun setProfileAvatarRing(ring: String) {
         _profileAvatarRing.value = ring
-        prefs.edit().putString("profile_avatar_ring", ring).apply()
+        safeEdit { putString("profile_avatar_ring", ring) }
     }
 
     fun setWidgetsEnabled(enabled: Boolean) {
         _widgetsEnabled.value = enabled
-        prefs.edit().putBoolean("widgets_enabled", enabled).apply()
-        applicationContext?.let { WeeklySpendingWidgetUpdater.updateAllWidgets(it) }
+        safeEdit { putBoolean("widgets_enabled", enabled) }
+        applicationContext?.let {
+            try {
+                WeeklySpendingWidgetUpdater.updateAllWidgets(it)
+            } catch (t: Throwable) {
+                Log.e(TAG, "Error updating widgets on widgetsEnabled toggle", t)
+            }
+        }
     }
 
     fun setPreferredWidgetStyle(style: String) {
         _preferredWidgetStyle.value = style
-        prefs.edit().putString("preferred_widget_style", style).apply()
-        applicationContext?.let { WeeklySpendingWidgetUpdater.updateAllWidgets(it) }
+        safeEdit { putString("preferred_widget_style", style) }
+        applicationContext?.let {
+            try {
+                WeeklySpendingWidgetUpdater.updateAllWidgets(it)
+            } catch (t: Throwable) {
+                Log.e(TAG, "Error updating widgets on preferred style change", t)
+            }
+        }
     }
 
     fun toggleAccountVisibility(accountId: String) {
@@ -185,92 +197,104 @@ object SettingsRepository {
             current.add(accountId)
         }
         _hiddenAccountIds.value = current
-        prefs.edit().putStringSet("hidden_account_ids", current).apply()
-        applicationContext?.let { WeeklySpendingWidgetUpdater.updateAllWidgets(it) }
+        safeEdit { putStringSet("hidden_account_ids", current) }
+        applicationContext?.let {
+            try {
+                WeeklySpendingWidgetUpdater.updateAllWidgets(it)
+            } catch (t: Throwable) {
+                Log.e(TAG, "Error updating widgets on account visibility toggle", t)
+            }
+        }
     }
 
     fun isAccountHidden(accountId: String): Boolean = _hiddenAccountIds.value.contains(accountId)
 
     fun setProfilePhotoUri(uri: String?) {
         _profilePhotoUri.value = uri
-        prefs.edit().putString("profile_photo_uri", uri).apply()
+        safeEdit { putString("profile_photo_uri", uri) }
     }
 
     fun setLastSmsSyncTimestamp(timestamp: Long) {
         _lastSmsSyncTimestamp.value = timestamp
-        prefs.edit().putLong("last_sms_sync_timestamp", timestamp).apply()
+        safeEdit { putLong("last_sms_sync_timestamp", timestamp) }
     }
 
     fun setBiometric(enabled: Boolean) {
         _biometricEnabled.value = enabled
-        prefs.edit().putBoolean("biometric", enabled).apply()
+        safeEdit { putBoolean("biometric", enabled) }
     }
 
     fun setAutoHideBalances(enabled: Boolean) {
         _autoHideBalances.value = enabled
-        prefs.edit().putBoolean("auto_hide", enabled).apply()
+        safeEdit { putBoolean("auto_hide", enabled) }
     }
     
     fun setPrivacyMode(enabled: Boolean) {
         _privacyMode.value = enabled
-        prefs.edit().putBoolean("privacy_mode", enabled).apply()
+        safeEdit { putBoolean("privacy_mode", enabled) }
     }
 
     fun setNotifications(enabled: Boolean) {
         _notificationsEnabled.value = enabled
-        prefs.edit().putBoolean("notifications", enabled).apply()
+        safeEdit { putBoolean("notifications", enabled) }
         applicationContext?.let {
-            if (enabled) {
-                SummaryScheduler.rescheduleAll(it, _summaryFrequencies.value)
-            } else {
-                SummaryScheduler.rescheduleAll(it, emptySet())
+            try {
+                if (enabled) {
+                    SummaryScheduler.rescheduleAll(it, _summaryFrequencies.value)
+                } else {
+                    SummaryScheduler.rescheduleAll(it, emptySet())
+                }
+            } catch (t: Throwable) {
+                Log.e(TAG, "Error updating summary scheduler on notification toggle", t)
             }
         }
     }
 
     fun setSmsAlerts(enabled: Boolean) {
         _smsAlerts.value = enabled
-        prefs.edit().putBoolean("sms_alerts", enabled).apply()
+        safeEdit { putBoolean("sms_alerts", enabled) }
     }
 
     fun setDateFormat(value: String) {
         _dateFormat.value = value
-        prefs.edit().putString("date_format", value).apply()
+        safeEdit { putString("date_format", value) }
     }
 
     fun setCalendarSystem(value: String) {
         _calendarSystem.value = value
-        prefs.edit().putString("calendar_system", value).apply()
+        safeEdit { putString("calendar_system", value) }
     }
 
     fun setFinancialOverviewPeriod(value: String) {
         _financialOverviewPeriod.value = value
-        prefs.edit().putString("financial_overview_period", value).apply()
+        safeEdit { putString("financial_overview_period", value) }
     }
 
     fun setTheme(value: String) {
         _theme.value = value
-        prefs.edit().putString("theme", value).apply()
+        safeEdit { putString("theme", value) }
     }
 
     fun setUserName(value: String) {
         _userName.value = value
-        prefs.edit().putString("user_name", value).apply()
+        safeEdit { putString("user_name", value) }
     }
 
     fun setUserEmail(value: String) {
         _userEmail.value = value
-        prefs.edit().putString("user_email", value).apply()
+        safeEdit { putString("user_email", value) }
     }
 
     fun setSummaryFrequencies(values: Set<String>) {
         _summaryFrequencies.value = values
-        // SharedPreferences requires a fresh Set instance for putStringSet — never
-        // pass through a Set that might still be mutated/reused elsewhere.
-        prefs.edit().putStringSet("summary_frequencies", HashSet(values)).apply()
+        safeEdit { putStringSet("summary_frequencies", HashSet(values)) }
         applicationContext?.let {
-            if (_notificationsEnabled.value) {
-                SummaryScheduler.rescheduleAll(it, values)
+            try {
+                if (_notificationsEnabled.value) {
+                    SummaryScheduler.rescheduleAll(it, values)
+                }
+            } catch (t: Throwable) {
+                Log.e(TAG, "Error updating summary scheduler on frequency change", t)
             }
         }
     }
@@ -279,37 +303,25 @@ object SettingsRepository {
     fun grantAdFree(durationMillis: Long) {
         val until = (System.currentTimeMillis() + durationMillis).coerceAtLeast(_adFreeUntilMillis.value)
         _adFreeUntilMillis.value = until
-        prefs.edit().putLong("ad_free_until", until).apply()
+        safeEdit { putLong("ad_free_until", until) }
     }
 
     fun setHasSeenOnboarding(seen: Boolean) {
         _hasSeenOnboarding.value = seen
-        prefs.edit().putBoolean("has_seen_onboarding", seen).apply()
+        safeEdit { putBoolean("has_seen_onboarding", seen) }
     }
 
     fun setNotificationCaptureEnabled(enabled: Boolean) {
         _notificationCaptureEnabled.value = enabled
-        prefs.edit().putBoolean("notification_capture_enabled", enabled).apply()
+        safeEdit { putBoolean("notification_capture_enabled", enabled) }
     }
 
     fun setMonitoredApps(apps: Map<String, String>) {
         _monitoredApps.value = apps
-        // Plain SharedPreferences has no native Map type — encode as "packageName::institutionId"
-        // strings. SharedPreferences also requires a fresh Set instance for putStringSet.
         val encoded = apps.map { (packageName, institutionId) -> "$packageName::$institutionId" }.toHashSet()
-        prefs.edit().putStringSet("monitored_apps", encoded).apply()
+        safeEdit { putStringSet("monitored_apps", encoded) }
     }
 
-    /**
-     * Merges any newly detected bank/wallet app into [monitoredApps] automatically — the
-     * mechanism that makes notification capture "just work" without the user having to check
-     * each app individually. Only ever adds; never removes an app the user has since
-     * unchecked, since an absent entry can mean either "never detected yet" or "user turned it
-     * off" and this can't tell those apart. Called from NotificationCaptureListenerService on
-     * every listener (re)connect (so capture starts automatically the moment permission is
-     * granted, with no screen visit required) and from NotificationCaptureScreen on open (so
-     * a newly installed bank app shows up pre-enabled the next time the user looks).
-     */
     fun autoEnableDetectedApps(matched: List<MonitorableApp>) {
         if (matched.isEmpty()) return
         val current = _monitoredApps.value
@@ -321,7 +333,6 @@ object SettingsRepository {
     }
 
     fun setAppPin(pin: String) {
-        if (!::prefs.isInitialized) return
         val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
         safeEdit {
             putString("pin_salt", Base64.encodeToString(salt, Base64.NO_WRAP))
@@ -333,7 +344,7 @@ object SettingsRepository {
     /** Returns true if [pin] matches the stored PIN, or if no PIN has been set yet. */
     fun verifyPin(pin: String): Boolean {
         if (!_hasPinSet.value) return true
-        if (!::prefs.isInitialized) return false
+        val prefs = getPrefs() ?: return false
         val saltStr = prefs.getString("pin_salt", null) ?: return false
         val storedHash = prefs.getString("pin_hash", null) ?: return false
         val salt = Base64.decode(saltStr, Base64.NO_WRAP)
@@ -351,9 +362,9 @@ object SettingsRepository {
         _userEmail.value = ""
         _profilePhotoUri.value = null
         _lastSmsSyncTimestamp.value = 0L
-        _theme.value = "Light"                     // BUG FIX: was "Dark", default is "Light"
-        _calendarSystem.value = "Gregorian"        // BUG FIX: was missing — prefs cleared but StateFlow not reset
-        _dateFormat.value = "MM/DD/YYYY"           // BUG FIX: was missing — prefs cleared but StateFlow not reset
+        _theme.value = "Light"
+        _calendarSystem.value = "Gregorian"
+        _dateFormat.value = "MM/DD/YYYY"
         _financialOverviewPeriod.value = "Monthly"
         _notificationsEnabled.value = true
         _smsAlerts.value = true
@@ -365,8 +376,8 @@ object SettingsRepository {
         _hasPinSet.value = false
         _hasSeenOnboarding.value = false
         _monitoredApps.value = emptyMap()
-        _adFreeUntilMillis.value = 0L              // BUG FIX: was missing — ad-free grant must clear on reset
+        _adFreeUntilMillis.value = 0L
 
-        prefs.edit().clear().apply()
+        safeEdit { clear() }
     }
 }

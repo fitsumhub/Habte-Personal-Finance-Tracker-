@@ -10,7 +10,7 @@ This is your complete, definitive, copy-paste ready guide to publish **Habte - P
 | :--- | :--- |
 | **App Name** | `Habte - Personal Finance` (ሀብቴ) |
 | **Package Name** | `com.fitsumhub.habtetracker` |
-| **Version** | `1.0.1` (Version Code `2`) |
+| **Version** | `1.0.2` (Version Code `3`) |
 | **Console App ID** | `4975579816095438878` |
 | **Developer ID** | `9140832679312928999` |
 | **Direct Console Link** | [Open Habte in Play Console](https://play.google.com/console/u/0/developers/9140832679312928999/app/4975579816095438878/) |
@@ -106,7 +106,7 @@ Go to: **Policy and programs > App content** in Play Console.
 
 ### 3.1 Privacy Policy
 * Enter your hosted Privacy Policy HTTPS URL (from `docs/privacy-policy.html`).
-* *Example URL*: `https://<your-username>.github.io/Habte-Financial-Tracker/privacy-policy.html`
+* *URL*: `https://fitsumhub.github.io/Habte-Personal-Finance-Tracker-/privacy-policy.html`
 
 ### 3.2 Sensitive Permissions — SMS Declaration
 Google Play requires a declaration for `READ_SMS` and `RECEIVE_SMS`.
@@ -153,14 +153,14 @@ Go to: 👉 [Production Release](https://play.google.com/console/u/0/developers/
    C:\Habte-Financial-Tracker\app\build\outputs\bundle\release\app-release.aab
    ```
 3. Fill in release details:
-   * **Release name**: `1.0.1 (2)`
+   * **Release name**: `1.0.2 (3)`
    * **Release notes (`en-US`)**:
      ```text
-     - Initial release of Habte (ሀብቴ) Personal Financial Tracker.
-     - Automatic transaction tracking for CBE, BOA, Telebirr, Awash, Dashen, and more.
-     - Multi-bank account balance overview and net worth analytics.
-     - Custom payment reminders and downloadable savings achievement certificates.
-     - 100% private, on-device local storage with biometric lock protection.
+     - Fixed background stability and battery optimizations for Samsung Galaxy and Android 15/16 devices.
+     - Resolved unexpected deep sleep warnings by improving background database access.
+     - Enhanced dual-SIM SMS detection for Ethiopian banking notifications.
+     - Improved widget refresh performance on home and lock screens.
+     - General performance enhancements and memory optimizations.
      ```
 4. Click **Next** at the bottom right.
 5. Review any items flagged by Google Play.

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📱 Play Store Reviews
+    url: https://play.google.com/store/apps/details?id=com.fitsumhub.habtetracker
+    about: For general feedback, please leave a Play Store review.
+  - name: 🔒 Privacy Policy
+    url: https://fitsumhub.github.io/Habte-Personal-Finance-Tracker-/privacy-policy.html
+    about: View our privacy policy here.

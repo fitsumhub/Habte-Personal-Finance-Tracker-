@@ -8,9 +8,11 @@ import android.os.Looper
 import androidx.core.content.ContextCompat
 import android.Manifest
 import android.content.pm.PackageManager
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -22,16 +24,23 @@ import kotlinx.coroutines.launch
 object SmsObserver {
     private var observer: ContentObserver? = null
     private var debounceJob: Job? = null
-    private val scope = CoroutineScope(kotlinx.coroutines.SupervisorJob() + Dispatchers.IO)
+    private val coroutineExceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        android.util.Log.e("SmsObserver", "Unhandled exception in SmsObserver coroutine", throwable)
+    }
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + coroutineExceptionHandler)
 
     fun register(context: Context) {
         if (observer != null) return
         val appContext = context.applicationContext
 
-        val hasReadPermission = ContextCompat.checkSelfPermission(
-            appContext,
-            Manifest.permission.READ_SMS
-        ) == PackageManager.PERMISSION_GRANTED
+        val hasReadPermission = try {
+            ContextCompat.checkSelfPermission(
+                appContext,
+                Manifest.permission.READ_SMS
+            ) == PackageManager.PERMISSION_GRANTED
+        } catch (_: Throwable) {
+            false
+        }
 
         if (!hasReadPermission) return
 
@@ -45,8 +54,8 @@ object SmsObserver {
                     try {
                         FinanceRepository.init(appContext)
                         FinanceRepository.syncHistoricalSms(appContext, fullResync = false)
-                    } catch (e: Exception) {
-                        // Ignore and gracefully handle
+                    } catch (t: Throwable) {
+                        android.util.Log.e("SmsObserver", "Error during incremental SMS sync", t)
                     }
                 }
             }
@@ -59,17 +68,19 @@ object SmsObserver {
                 true,
                 newObserver
             )
-        } catch (e: Exception) {
+        } catch (t: Throwable) {
+            android.util.Log.e("SmsObserver", "Failed to register content observer", t)
             observer = null
         }
     }
 
     fun unregister(context: Context) {
+        debounceJob?.cancel()
         observer?.let {
             try {
                 context.applicationContext.contentResolver.unregisterContentObserver(it)
-            } catch (e: Exception) {
-                // Ignore
+            } catch (t: Throwable) {
+                android.util.Log.e("SmsObserver", "Failed to unregister content observer", t)
             }
             observer = null
         }

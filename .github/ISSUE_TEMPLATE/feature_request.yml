@@ -1,0 +1,65 @@
+name: "💡 Feature Request"
+description: "Suggest a new feature or improvement for Habte"
+title: "[FEATURE] "
+labels: ["enhancement"]
+assignees:
+  - fitsumhub
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature! Habte is built for the Ethiopian community — your feedback shapes the roadmap.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / Motivation
+      description: "What problem does this feature solve? What's missing?"
+      placeholder: "As a Habte user, I want to... because..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: "Describe the feature you'd like to see"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Feature Category
+      options:
+        - Bank / SMS Parsing (new bank support)
+        - UI / UX improvement
+        - Widget
+        - Security / Privacy
+        - Export / Import
+        - Notifications / Reminders
+        - Analytics / Charts
+        - Localization / Language
+        - Performance
+        - Other
+
+  - type: input
+    id: bank-sms
+    attributes:
+      label: Bank SMS Example (if requesting new bank support)
+      description: "Paste a sample SMS (replace your real account/balance numbers with Xs)"
+      placeholder: "Your account XX1234 has been debited by ETB XXX.00..."
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: "Any alternative solutions or workarounds you've tried?"
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing issues and this feature has not been requested
+          required: true
