@@ -1,6 +1,8 @@
 package com.mobile.data
 
 import java.util.Calendar
+import java.util.Locale
+import java.util.TimeZone
 
 /** Which calendar system a screen should render dates in — user-selectable in Settings. */
 enum class CalendarSystem { GREGORIAN, ETHIOPIAN }
@@ -15,11 +17,18 @@ data class EthiopianDate(val year: Int, val month: Int, val day: Int)
  * (2007-09-12 Gregorian, since 2008 is a Gregorian leap year) = Meskerem 1, 2000 E.C.
  */
 object EthiopianCalendar {
+    val ETHIOPIA_TIME_ZONE: TimeZone = TimeZone.getTimeZone("Africa/Addis_Ababa")
+
     private const val JD_EPOCH_OFFSET_AMETE_MIHRET = 1723856
 
     val MONTH_NAMES = listOf(
         "Meskerem", "Tikimt", "Hidar", "Tahsas", "Tir", "Yekatit",
         "Megabit", "Miazia", "Ginbot", "Sene", "Hamle", "Nehase", "Pagume"
+    )
+
+    val AMHARIC_MONTH_NAMES = listOf(
+        "መስከረም", "ጥቅምት", "ኅዳር", "ታኅሣሥ", "ጥር", "የካቲት",
+        "መጋቢት", "ሚያዝያ", "ግንቦት", "ሰኔ", "ሐምሌ", "ነሐሴ", "ጳጉሜ"
     )
 
     private fun gregorianToJdn(year: Int, month: Int, day: Int): Int {
@@ -106,6 +115,54 @@ object EthiopianCalendar {
     fun formatMonthShort(cal: Calendar): String {
         val e = fromGregorian(cal)
         return monthName(e.month).take(3)
+    }
+
+    /**
+     * Converts a Calendar into authentic Ethiopian 12-hour traditional time format.
+     * Ethiopian day starts at 6:00 AM (12:00 ጠዋት).
+     * 8:00 PM (20:00 EAT) = 2:00 ምሽት.
+     */
+    fun formatEthiopianTime(cal: Calendar, inAmharic: Boolean = true): String {
+        val ethCal = (cal.clone() as Calendar).apply {
+            timeZone = ETHIOPIA_TIME_ZONE
+        }
+        val hour24 = ethCal.get(Calendar.HOUR_OF_DAY)
+        val minute = ethCal.get(Calendar.MINUTE)
+        val ethHour = ((hour24 + 6) % 12).let { if (it == 0) 12 else it }
+        val minStr = String.format(Locale.US, "%02d", minute)
+
+        val period = if (inAmharic) {
+            when (hour24) {
+                in 6..11 -> "ጠዋት"
+                in 12..16 -> "ቀን"
+                in 17..19 -> "ማታ"
+                in 20..23 -> "ምሽት"
+                else -> "ሌሊት"
+            }
+        } else {
+            when (hour24) {
+                in 6..11 -> "Morning"
+                in 12..16 -> "Afternoon"
+                in 17..19 -> "Evening"
+                in 20..23 -> "Night"
+                else -> "Late Night"
+            }
+        }
+        return "$ethHour:$minStr $period"
+    }
+
+    /**
+     * Start of the current day in Ethiopian Time (00:00:00.000 in Africa/Addis_Ababa).
+     */
+    fun startOfEthiopianDayMillis(now: Calendar = Calendar.getInstance(ETHIOPIA_TIME_ZONE)): Long {
+        val cal = (now.clone() as Calendar).apply {
+            timeZone = ETHIOPIA_TIME_ZONE
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        return cal.timeInMillis
     }
 }
 

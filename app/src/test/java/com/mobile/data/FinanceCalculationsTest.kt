@@ -2,6 +2,7 @@ package com.mobile.data
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -618,5 +619,65 @@ class FinanceCalculationsTest {
 
         val bankTotal = Data.getBankTotal(bank, setOf("acc1"))
         assertEquals(20000.0, bankTotal, 0.01)
+    }
+
+    // ── Monthly growth and Balance trend tests ─────────────────────────────────────
+
+    @Test
+    fun `calculateMonthlyGrowth returns 0 percent when empty`() {
+        val growth = calculateMonthlyGrowth(emptyList())
+        assertEquals(0.0, growth.percentage, 0.01)
+        assertEquals(true, growth.isPositive)
+        assertEquals("0.0% this month", growth.formattedText)
+    }
+
+    @Test
+    fun `calculateBalanceTrend returns valid points and chronological order`() {
+        val txs = listOf(
+            Transaction("1", "kaldi", 100.0, "Jan 01, 2026", "debit", "CBE", balance = 900.0),
+            Transaction("2", "salary", 1000.0, "Jan 02, 2026", "credit", "CBE", balance = 1900.0)
+        )
+        val trend = calculateBalanceTrend(txs, 1900.0)
+        assertTrue(trend.size >= 2)
+        // Earliest balance was 900, latest was 1900
+        assertEquals(900f, trend.first(), 0.01f)
+    }
+
+    @Test
+    fun `formatEthiopianTime correctly converts 24h to Ethiopian traditional 12h clock`() {
+        val cal8pm = Calendar.getInstance(EthiopianCalendar.ETHIOPIA_TIME_ZONE).apply {
+            set(Calendar.HOUR_OF_DAY, 20) // 8:00 PM EAT
+            set(Calendar.MINUTE, 0)
+        }
+        val ethTime8pm = EthiopianCalendar.formatEthiopianTime(cal8pm, inAmharic = true)
+        assertEquals("2:00 ምሽት", ethTime8pm)
+
+        val cal6am = Calendar.getInstance(EthiopianCalendar.ETHIOPIA_TIME_ZONE).apply {
+            set(Calendar.HOUR_OF_DAY, 6) // 6:00 AM EAT
+            set(Calendar.MINUTE, 30)
+        }
+        val ethTime6am = EthiopianCalendar.formatEthiopianTime(cal6am, inAmharic = true)
+        assertEquals("12:30 ጠዋት", ethTime6am)
+
+        val cal12pm = Calendar.getInstance(EthiopianCalendar.ETHIOPIA_TIME_ZONE).apply {
+            set(Calendar.HOUR_OF_DAY, 12) // 12:00 PM EAT
+            set(Calendar.MINUTE, 15)
+        }
+        val ethTime12pm = EthiopianCalendar.formatEthiopianTime(cal12pm, inAmharic = true)
+        assertEquals("6:15 ቀን", ethTime12pm)
+    }
+
+    @Test
+    fun `parseTransactionDate handles multiple date formats`() {
+        val usCal = parseTransactionDate("Sep 29, 2026")
+        assertNotNull(usCal)
+        assertEquals(2026, usCal!!.get(Calendar.YEAR))
+        assertEquals(Calendar.SEPTEMBER, usCal.get(Calendar.MONTH))
+        assertEquals(29, usCal.get(Calendar.DAY_OF_MONTH))
+
+        val isoCal = parseTransactionDate("2026-09-29")
+        assertNotNull(isoCal)
+        assertEquals(2026, isoCal!!.get(Calendar.YEAR))
+        assertEquals(29, isoCal.get(Calendar.DAY_OF_MONTH))
     }
 }

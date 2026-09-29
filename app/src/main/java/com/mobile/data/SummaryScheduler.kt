@@ -41,11 +41,12 @@ object SummaryScheduler {
         else -> null
     }
 
-    /** Calculates the next calendar trigger time (8:00 PM evening digest). */
+    /** Calculates the next calendar trigger time based on Ethiopian Time (8:00 PM EAT / 2:00 ምሽት evening digest). */
     fun nextScheduledTimeMillis(frequency: String): Long {
-        val now = Calendar.getInstance()
-        val target = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 20) // 8:00 PM Evening Digest
+        val tz = EthiopianCalendar.ETHIOPIA_TIME_ZONE
+        val now = Calendar.getInstance(tz)
+        val target = Calendar.getInstance(tz).apply {
+            set(Calendar.HOUR_OF_DAY, 20) // 8:00 PM EAT (2:00 ምሽት Ethiopian Evening)
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)

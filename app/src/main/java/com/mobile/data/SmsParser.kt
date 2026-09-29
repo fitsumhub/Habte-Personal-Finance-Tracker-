@@ -197,9 +197,9 @@ object SmsParser {
         val title = categorizeTitle(lowerBody, body, type, institution.name)
         val category = categorizeExpense(title, type)
 
-        val sdf = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+        val sdf = SimpleDateFormat("MMM dd, yyyy", Locale.US)
         val dateStr = sdf.format(Date(timestamp))
-        val timeStr = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(timestamp))
+        val timeStr = SimpleDateFormat("hh:mm a", Locale.US).format(Date(timestamp))
 
         // Unified transaction ID: tx-<BANK>-<STABLE_KEY>
         // Converges SMS and App Notifications describing the same financial event into one primary key.

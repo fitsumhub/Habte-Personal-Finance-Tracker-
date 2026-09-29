@@ -1,4 +1,4 @@
-﻿package com.mobile.ui.components
+package com.mobile.ui.components
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Canvas
@@ -7,8 +7,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mobile.data.Data
+import com.mobile.data.MonthlyGrowth
 import com.mobile.ui.theme.LocalEthiopianColors
 
 @Composable
@@ -35,6 +36,7 @@ fun BalanceCard(
     bankCount: Int,
     accountCount: Int,
     trendData: List<Float>,
+    growth: MonthlyGrowth = MonthlyGrowth(0.0, true, "0.0% this month"),
     modifier: Modifier = Modifier
 ) {
     val autoHide by com.mobile.data.SettingsRepository.autoHideBalances.collectAsState()
@@ -47,13 +49,13 @@ fun BalanceCard(
             .padding(bottom = 18.dp)
             .shadow(
                 elevation = 6.dp,
-                shape = RoundedCornerShape(20.dp),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
                 ambientColor = Color(0x33000000),
                 spotColor = colors.emeraldPrimary.copy(alpha = 0.25f)
             )
-            .clip(RoundedCornerShape(20.dp))
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(20.dp))
             .background(colors.surface)
-            .border(1.dp, colors.border, RoundedCornerShape(20.dp))
+            .border(1.dp, colors.border, androidx.compose.foundation.shape.RoundedCornerShape(20.dp))
             .padding(20.dp)
     ) {
         Column {
@@ -123,24 +125,27 @@ fun BalanceCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Growth Indicator Badge
+            // Dynamic Growth Indicator Badge
+            val badgeBg = if (growth.isPositive) colors.emeraldPrimary.copy(alpha = 0.12f) else Color(0xFFFF5252).copy(alpha = 0.12f)
+            val badgeColor = if (growth.isPositive) colors.emeraldPrimary else Color(0xFFFF5252)
+            val badgeIcon = if (growth.isPositive) Icons.AutoMirrored.Filled.TrendingUp else Icons.AutoMirrored.Filled.TrendingDown
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(colors.emeraldPrimary.copy(alpha = 0.12f))
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+                    .background(badgeBg)
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.TrendingUp,
+                    imageVector = badgeIcon,
                     contentDescription = null,
-                    tint = colors.emeraldPrimary,
+                    tint = badgeColor,
                     modifier = Modifier.size(14.dp)
                 )
                 Text(
-                    text = "+8.4% this month",
-                    color = colors.emeraldPrimary,
+                    text = growth.formattedText,
+                    color = badgeColor,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -148,10 +153,10 @@ fun BalanceCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Minimalist Sparkline Chart
+            // Minimalist Sparkline Chart with true dynamic normalization
             Sparkline(
                 data = trendData,
-                lineColor = colors.emeraldPrimary,
+                lineColor = if (growth.isPositive) colors.emeraldPrimary else Color(0xFFFF8A65),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(38.dp)
@@ -177,16 +182,24 @@ fun Sparkline(
     modifier: Modifier = Modifier
 ) {
     Canvas(modifier = modifier) {
-        if (data.isEmpty()) return@Canvas
+        if (data.size < 2) return@Canvas
 
         val width = size.width
         val height = size.height
-        val step = if (data.size > 1) width / (data.size - 1) else width
+        val paddingY = 4.dp.toPx()
+        val availableHeight = (height - (paddingY * 2)).coerceAtLeast(1f)
+
+        val minVal = data.minOrNull() ?: 0f
+        val maxVal = data.maxOrNull() ?: 0f
+        val range = maxVal - minVal
+
+        val step = width / (data.size - 1)
 
         val path = Path().apply {
             data.forEachIndexed { index, value ->
                 val x = index * step
-                val y = height - (value * height).coerceIn(2f, height - 2f)
+                val normalizedY = if (range > 0.0001f) ((value - minVal) / range).coerceIn(0f, 1f) else 0.5f
+                val y = height - paddingY - (normalizedY * availableHeight)
                 if (index == 0) moveTo(x, y) else lineTo(x, y)
             }
         }
@@ -207,7 +220,7 @@ fun Sparkline(
         drawPath(
             path = fillPath,
             brush = Brush.verticalGradient(
-                colors = listOf(lineColor.copy(alpha = 0.18f), Color.Transparent)
+                colors = listOf(lineColor.copy(alpha = 0.20f), Color.Transparent)
             )
         )
     }

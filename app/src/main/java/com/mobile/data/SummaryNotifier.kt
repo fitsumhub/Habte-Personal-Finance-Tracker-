@@ -48,10 +48,21 @@ object SummaryNotifier {
         ensureChannel(context)
         val notificationId = SummaryScheduler.idFor(frequency)
 
+        val ethiopiaCal = java.util.Calendar.getInstance(EthiopianCalendar.ETHIOPIA_TIME_ZONE)
+        val ethTimeStr = EthiopianCalendar.formatEthiopianTime(ethiopiaCal, inAmharic = true)
+        val ethDateStr = EthiopianCalendar.formatFull(ethiopiaCal)
+        val isEthiopianCalendar = SettingsRepository.calendarSystem.value == "Ethiopian"
+
+        val title = if (frequency.equals("Daily", ignoreCase = true)) {
+            if (isEthiopianCalendar) "ሀብቴ የዕለት ማጠቃለያ ($ethTimeStr)" else "Habte Daily Summary ($ethTimeStr)"
+        } else {
+            "Habte ${periodLabel(frequency)} Summary"
+        }
+
         val (summaryText, expandedText) = if (transactions.isEmpty()) {
             Pair(
                 "No spending or transactions recorded for this period.",
-                "Your account is all clear. No debit or credit activities were logged in this $frequency window."
+                "Your account is all clear. No debit or credit activities logged today ($ethDateStr • $ethTimeStr EAT)."
             )
         } else {
             val income = transactions.filter { it.type == "credit" }.sumOf { it.amount }
@@ -71,7 +82,7 @@ object SummaryNotifier {
             val expanded = buildString {
                 append(summary)
                 append("\n")
-                append("$txCount transaction${if (txCount == 1) "" else "s"}")
+                append("$txCount transaction${if (txCount == 1) "" else "s"} • $ethDateStr ($ethTimeStr EAT)")
                 if (categoryLines.isNotEmpty()) {
                     append("\n\nTop spending categories:\n")
                     append(categoryLines)
@@ -92,7 +103,7 @@ object SummaryNotifier {
             .setSmallIcon(R.drawable.ic_notification)
             .setLargeIcon(NotificationIcons.build(ACCENT_COLOR, NotificationGlyph.DOT))
             .setColor(ACCENT_COLOR)
-            .setContentTitle("Habte ${periodLabel(frequency)} Summary")
+            .setContentTitle(title)
             .setContentText(summaryText)
             .setStyle(NotificationCompat.BigTextStyle().bigText(expandedText))
             .setAutoCancel(true)

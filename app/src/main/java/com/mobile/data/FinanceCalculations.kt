@@ -3,6 +3,7 @@ package com.mobile.data
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import kotlin.math.abs
 
 /**
  * Pure, unit-testable versions of the period/aggregate math that AnalyticsScreen and
@@ -98,13 +99,27 @@ fun incomeByBank(transactions: List<Transaction>, limit: Int = Int.MAX_VALUE): L
 
 // ── Income vs Expense trend buckets (week/month/year, Gregorian or Ethiopian) ──────────
 
-private val transactionDateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.US)
-/** Parses a [Transaction.date] string (formatted "MMM dd, yyyy") into a Calendar, or null if malformed. */
-fun parseTransactionDate(dateStr: String): Calendar? = try {
-    val d = transactionDateFormat.parse(dateStr)
-    if (d == null) null else Calendar.getInstance().apply { time = d }
-} catch (e: Exception) {
-    null
+/** Parses a [Transaction.date] string into a Calendar with multi-locale and multi-format fallback. */
+fun parseTransactionDate(dateStr: String): Calendar? {
+    if (dateStr.isBlank()) return null
+    val patterns = listOf(
+        "MMM dd, yyyy" to Locale.US,
+        "MMM dd, yyyy" to Locale.getDefault(),
+        "yyyy-MM-dd" to Locale.US,
+        "dd/MM/yyyy" to Locale.US,
+        "MM/dd/yyyy" to Locale.US,
+        "MMM d, yyyy" to Locale.US,
+        "MMM d, yyyy" to Locale.getDefault()
+    )
+    for ((pattern, locale) in patterns) {
+        try {
+            val d = SimpleDateFormat(pattern, locale).parse(dateStr.trim())
+            if (d != null) {
+                return Calendar.getInstance().apply { time = d }
+            }
+        } catch (_: Exception) {}
+    }
+    return null
 }
 
 private val displayDatePatterns = mapOf(
@@ -246,14 +261,151 @@ fun yearlyIncomeExpenseSeries(
 
 // ── Net worth trend (Reports & Data > Net Worth Overview) ─────────────────────────────
 
-private val transactionDateTimeFormat = SimpleDateFormat("MMM dd, yyyy hh:mm a", Locale.US)
-
-fun transactionTimestampMillis(tx: Transaction): Long? =
-    if (tx.time.isBlank()) null else try {
-        transactionDateTimeFormat.parse("${tx.date} ${tx.time}")?.time
-    } catch (e: Exception) {
-        null
+/** Parses transaction date + time into epoch millis with multi-locale and format fallback. */
+fun transactionTimestampMillis(tx: Transaction): Long? {
+    if (tx.time.isBlank() || tx.date.isBlank()) return null
+    val dtString = "${tx.date.trim()} ${tx.time.trim()}"
+    val patterns = listOf(
+        "MMM dd, yyyy hh:mm a" to Locale.US,
+        "MMM dd, yyyy hh:mm a" to Locale.getDefault(),
+        "MMM dd, yyyy HH:mm" to Locale.US,
+        "MMM dd, yyyy HH:mm" to Locale.getDefault(),
+        "MMM d, yyyy hh:mm a" to Locale.US,
+        "MMM d, yyyy hh:mm a" to Locale.getDefault(),
+        "yyyy-MM-dd HH:mm:ss" to Locale.US,
+        "yyyy-MM-dd HH:mm" to Locale.US,
+        "dd/MM/yyyy HH:mm" to Locale.US
+    )
+    for ((pattern, locale) in patterns) {
+        try {
+            val parsed = SimpleDateFormat(pattern, locale).parse(dtString)
+            if (parsed != null) return parsed.time
+        } catch (_: Exception) {}
     }
+    return null
+}
+
+/** Result of monthly financial growth / savings calculation for Home section. */
+data class MonthlyGrowth(
+    val percentage: Double,
+    val isPositive: Boolean,
+    val formattedText: String
+)
+
+/**
+ * Calculates real month-over-month growth percentage or savings rate from transactions.
+ * Never hardcoded.
+ */
+fun calculateMonthlyGrowth(transactions: List<Transaction>): MonthlyGrowth {
+    if (transactions.isEmpty()) {
+        return MonthlyGrowth(0.0, true, "0.0% this month")
+    }
+
+    val now = Calendar.getInstance()
+    val thisMonth = now.get(Calendar.MONTH)
+    val thisYear = now.get(Calendar.YEAR)
+
+    val prevCal = (now.clone() as Calendar).apply { add(Calendar.MONTH, -1) }
+    val prevMonth = prevCal.get(Calendar.MONTH)
+    val prevYear = prevCal.get(Calendar.YEAR)
+
+    var thisMonthIncome = 0.0
+    var thisMonthExpense = 0.0
+    var prevMonthIncome = 0.0
+    var prevMonthExpense = 0.0
+
+    for (tx in transactions) {
+        val cal = parseTransactionDate(tx.date) ?: continue
+        val txMonth = cal.get(Calendar.MONTH)
+        val txYear = cal.get(Calendar.YEAR)
+
+        if (txMonth == thisMonth && txYear == thisYear) {
+            if (tx.type == "credit") thisMonthIncome += tx.amount else thisMonthExpense += tx.amount
+        } else if (txMonth == prevMonth && txYear == prevYear) {
+            if (tx.type == "credit") prevMonthIncome += tx.amount else prevMonthExpense += tx.amount
+        }
+    }
+
+    val thisMonthNet = thisMonthIncome - thisMonthExpense
+    val prevMonthNet = prevMonthIncome - prevMonthExpense
+
+    return if (prevMonthIncome > 0 || prevMonthExpense > 0) {
+        val diff = thisMonthNet - prevMonthNet
+        val base = if (abs(prevMonthNet) > 0.01) abs(prevMonthNet) else (prevMonthIncome + prevMonthExpense).coerceAtLeast(1.0)
+        val pct = (diff / base) * 100.0
+        val clampedPct = pct.coerceIn(-999.0, 999.0)
+        val sign = if (clampedPct >= 0) "+" else ""
+        MonthlyGrowth(
+            percentage = clampedPct,
+            isPositive = clampedPct >= 0,
+            formattedText = "$sign${String.format(Locale.US, "%.1f", clampedPct)}% vs last month"
+        )
+    } else if (thisMonthIncome > 0) {
+        val savingsRate = ((thisMonthIncome - thisMonthExpense) / thisMonthIncome * 100.0).coerceIn(-100.0, 100.0)
+        val sign = if (savingsRate >= 0) "+" else ""
+        MonthlyGrowth(
+            percentage = savingsRate,
+            isPositive = savingsRate >= 0,
+            formattedText = "$sign${String.format(Locale.US, "%.1f", savingsRate)}% saved this month"
+        )
+    } else if (thisMonthExpense > 0) {
+        MonthlyGrowth(
+            percentage = -100.0,
+            isPositive = false,
+            formattedText = "−ETB ${Data.formatBalance(thisMonthExpense)} this month"
+        )
+    } else {
+        MonthlyGrowth(
+            percentage = 0.0,
+            isPositive = true,
+            formattedText = "0.0% this month"
+        )
+    }
+}
+
+/**
+ * Reconstructs a chronological series of balance points for the Home screen sparkline graph.
+ * If bank reported explicit balances, uses them and sorts chronologically.
+ * Otherwise reconstructs running balance back from current total balance, and sorts from oldest to newest.
+ */
+fun calculateBalanceTrend(transactions: List<Transaction>, currentBalance: Double): List<Float> {
+    if (transactions.isEmpty()) {
+        val b = currentBalance.toFloat()
+        return listOf(b, b, b, b)
+    }
+
+    val txsWithBalance = transactions.filter { it.balance != null }
+    if (txsWithBalance.size >= 2) {
+        val sorted = txsWithBalance.sortedWith { a, b ->
+            val timeA = transactionTimestampMillis(a) ?: parseTransactionDate(a.date)?.timeInMillis ?: 0L
+            val timeB = transactionTimestampMillis(b) ?: parseTransactionDate(b.date)?.timeInMillis ?: 0L
+            timeA.compareTo(timeB)
+        }
+        val points = sorted.takeLast(14).map { it.balance!!.toFloat() }
+        if (points.size >= 2) return points
+    }
+
+    val recentTxs = transactions.take(14)
+    var running = currentBalance
+    val points = mutableListOf<Float>()
+    points.add(running.toFloat())
+
+    for (tx in recentTxs) {
+        if (tx.type == "credit") {
+            running -= tx.amount
+        } else {
+            running += tx.amount
+        }
+        points.add(running.toFloat())
+    }
+
+    val chronological = points.reversed()
+    return if (chronological.size < 2) {
+        listOf(chronological.firstOrNull() ?: 0f, chronological.firstOrNull() ?: 0f)
+    } else {
+        chronological
+    }
+}
 
 /** Total net worth as of one point in time, for a trend comparison chart. */
 data class NetWorthPoint(val label: String, val fullLabel: String, val netWorth: Double)

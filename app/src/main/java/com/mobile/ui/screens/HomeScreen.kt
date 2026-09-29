@@ -246,13 +246,13 @@ fun HomeScreen(onNavigateToProfile: () -> Unit, onNavigateToTransactionHistory: 
     }
 
 
-    // Compute trend data dynamically or fallback to empty
-    val trendData = remember(transactions) {
-        if (transactions.size >= 2) {
-            transactions.take(7).map { it.amount.toFloat() }.reversed()
-        } else {
-            listOf(0f, 0f, 0f, 0f) // flatline fallback
-        }
+    // Compute true dynamic balance trend and monthly growth percentage
+    val trendData = remember(transactions, totalBalance) {
+        com.mobile.data.calculateBalanceTrend(transactions, totalBalance)
+    }
+
+    val growthPercentage = remember(transactions) {
+        com.mobile.data.calculateMonthlyGrowth(transactions)
     }
 
 
@@ -365,7 +365,8 @@ fun HomeScreen(onNavigateToProfile: () -> Unit, onNavigateToTransactionHistory: 
                 totalBalance = totalBalance,
                 bankCount = banks.size,
                 accountCount = totalAccounts,
-                trendData = trendData
+                trendData = trendData,
+                growth = growthPercentage
             )
 
             // Quick Actions: Income, Expense, Transfer, Reminder

@@ -57,8 +57,21 @@ class SummaryAlarmReceiver : BroadcastReceiver() {
             val pendingResult = try { goAsync() } catch (_: Throwable) { null }
             scope.launch {
                 try {
-                    val since = System.currentTimeMillis() - windowMillis
-                    val transactions = loadTransactionsSince(appContext, since)
+                    val transactions = if (frequency.equals("Daily", ignoreCase = true)) {
+                        // Gather transactions for today based on Ethiopian Time
+                        val startOfDay = EthiopianCalendar.startOfEthiopianDayMillis()
+                        val dayTxs = loadTransactionsSince(appContext, startOfDay)
+                        if (dayTxs.isEmpty()) {
+                            // Fallback to rolling 24 hours if no transactions today yet
+                            loadTransactionsSince(appContext, System.currentTimeMillis() - 24 * 60 * 60 * 1000L)
+                        } else {
+                            dayTxs
+                        }
+                    } else {
+                        val windowMillis = SummaryScheduler.intervalMillis(frequency) ?: (24 * 60 * 60 * 1000L)
+                        val since = System.currentTimeMillis() - windowMillis
+                        loadTransactionsSince(appContext, since)
+                    }
                     SummaryNotifier.notify(appContext, frequency, transactions)
                 } catch (t: Throwable) {
                     Log.e(TAG, "Error in SummaryAlarmReceiver coroutine", t)
