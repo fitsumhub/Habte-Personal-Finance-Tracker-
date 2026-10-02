@@ -160,6 +160,27 @@ class MainActivity : AppCompatActivity() {
                 else -> TopLevelScreen.APP
             }
 
+            // AdMob App Open Ad: Triggered when user enters authenticated main app
+            // or brings app to foreground, never interrupting PIN lock, onboarding, or crash fallback.
+            val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+            DisposableEffect(lifecycleOwner, screenState) {
+                val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+                    if (event == androidx.lifecycle.Lifecycle.Event.ON_START && screenState == TopLevelScreen.APP) {
+                        AdMobService.showAppOpenIfAvailable(this@MainActivity)
+                    }
+                }
+                lifecycleOwner.lifecycle.addObserver(observer)
+                onDispose {
+                    lifecycleOwner.lifecycle.removeObserver(observer)
+                }
+            }
+
+            LaunchedEffect(screenState) {
+                if (screenState == TopLevelScreen.APP) {
+                    AdMobService.showAppOpenIfAvailable(this@MainActivity)
+                }
+            }
+
             // Crossfade instead of an instant swap — the onboarding screen's dark bespoke
             // palette handing off to the app's light theme (or the lock screen resolving
             // into either) used to snap in one frame; this makes every top-level state

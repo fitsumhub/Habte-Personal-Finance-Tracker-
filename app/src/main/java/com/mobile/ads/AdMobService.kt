@@ -13,6 +13,8 @@ import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.OnUserEarnedRewardListener
 import com.google.android.gms.ads.RequestConfiguration
 import com.google.android.gms.ads.VideoOptions
+import com.google.android.gms.ads.appopen.AppOpenAd
+import com.google.android.gms.ads.appopen.AppOpenAd.AppOpenAdLoadCallback
 import com.google.android.gms.ads.initialization.InitializationStatus
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener
 import com.google.android.gms.ads.interstitial.InterstitialAd
@@ -39,10 +41,14 @@ object AdMobService {
 
     private var initialized = false
 
-    // Interstitial/rewarded ads are one-shot: once `show()` is called, that specific
+    // Interstitial/rewarded/app-open ads are one-shot: once `show()` is called, that specific
     // instance is spent and a fresh one must be loaded before it can be shown again.
     private var interstitialAd: InterstitialAd? = null
     private var rewardedAd: RewardedAd? = null
+    private var appOpenAd: AppOpenAd? = null
+    private var isLoadingAppOpen = false
+    private var isShowingAppOpen = false
+    private var appOpenLoadTime: Long = 0L
 
     /**
      * Step 1: gather ad consent (required before any ad request — see AdMobConsent), then
@@ -78,6 +84,7 @@ object AdMobService {
             // of the user waiting on a fresh network load at that moment.
             loadInterstitial(activity)
             loadRewarded(activity)
+            loadAppOpen(activity)
         }
     }
 
@@ -225,5 +232,104 @@ object AdMobService {
             .withNativeAdOptions(adOptions)
             .build()
         loader.loadAd(AdRequest.Builder().build())
+    }
+
+    // ── App Open ──────────────────────────────────────────────────────────────────────
+
+    /**
+     * Google AdMob Policy: App Open ads expire after 4 hours.
+     * Do not show an ad that was loaded more than 4 hours ago.
+     */
+    private fun isAppOpenAdAvailable(): Boolean {
+        val fourHoursMillis = 4 * 60 * 60 * 1000L
+        val notExpired = (System.currentTimeMillis() - appOpenLoadTime) < fourHoursMillis
+        return appOpenAd != null && notExpired
+    }
+
+    /** True if an App Open ad is currently preloaded and ready to present. */
+    val isAppOpenAdReady: Boolean
+        get() = isAppOpenAdAvailable()
+
+    /** Asynchronously loads an App Open ad and caches it until shown. */
+    fun loadAppOpen(context: Context) {
+        if (SettingsRepository.isAdFreeActive()) {
+            Log.d(TAG, "Ad-free active; skipping App Open load")
+            return
+        }
+        if (isLoadingAppOpen || isAppOpenAdAvailable()) {
+            return
+        }
+
+        isLoadingAppOpen = true
+        val request = AdRequest.Builder().build()
+        AppOpenAd.load(
+            context.applicationContext,
+            AdMobConfig.appOpenAdUnitId,
+            request,
+            object : AppOpenAdLoadCallback() {
+                override fun onAdLoaded(ad: AppOpenAd) {
+                    Log.d(TAG, "App Open ad loaded successfully")
+                    appOpenAd = ad
+                    isLoadingAppOpen = false
+                    appOpenLoadTime = System.currentTimeMillis()
+                }
+
+                override fun onAdFailedToLoad(error: LoadAdError) {
+                    Log.w(TAG, "App Open ad failed to load: ${error.message}")
+                    isLoadingAppOpen = false
+                    appOpenAd = null
+                }
+            }
+        )
+    }
+
+    /**
+     * Shows the preloaded App Open ad if available and the user has not unlocked ad-free.
+     * AdMob Policy & Best Practice:
+     * - Never interrupts sensitive flows (PIN lock / biometrics / onboarding).
+     * - Automatically preloads the next ad once dismissed or failed.
+     * - Always calls [onComplete] so caller proceeds cleanly regardless of ad status.
+     */
+    fun showAppOpenIfAvailable(activity: Activity, onComplete: () -> Unit = {}) {
+        if (SettingsRepository.isAdFreeActive()) {
+            onComplete()
+            return
+        }
+        if (isShowingAppOpen) {
+            onComplete()
+            return
+        }
+        if (!isAppOpenAdAvailable()) {
+            loadAppOpen(activity)
+            onComplete()
+            return
+        }
+
+        val ad = appOpenAd ?: run {
+            onComplete()
+            return
+        }
+
+        ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+            override fun onAdShowedFullScreenContent() {
+                isShowingAppOpen = true
+            }
+
+            override fun onAdDismissedFullScreenContent() {
+                appOpenAd = null
+                isShowingAppOpen = false
+                loadAppOpen(activity)
+                onComplete()
+            }
+
+            override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                Log.w(TAG, "App Open ad failed to show: ${error.message}")
+                appOpenAd = null
+                isShowingAppOpen = false
+                loadAppOpen(activity)
+                onComplete()
+            }
+        }
+        ad.show(activity)
     }
 }

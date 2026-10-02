@@ -296,6 +296,9 @@ fun ExportFinancialStatementScreen(onBack: () -> Unit) {
                                     sourceFilter = sourceFilter
                                 )
                                 generatedFile = file
+                                (context as? android.app.Activity)?.let { act ->
+                                    com.mobile.ads.AdMobService.showInterstitialIfLoaded(act)
+                                }
                             } catch (e: Exception) {
                                 Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
                             } finally {
