@@ -483,6 +483,23 @@ fun SettingsScreen(onNavigate: (String) -> Unit = {}) {
                         showPrivacyDialog = true
                     }
                 )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline, modifier = Modifier.padding(start = 56.dp))
+                SettingOptionRow(
+                    icon = Icons.Default.Security,
+                    label = "Ad Privacy Choices",
+                    value = "",
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        val activity = context as? android.app.Activity
+                        if (activity != null) {
+                            com.mobile.ads.AdMobConsent.showPrivacyOptionsForm(activity) { error ->
+                                if (error != null) {
+                                    Toast.makeText(context, "Consent settings are not required in your region.", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    }
+                )
             }
 
             Spacer(modifier = Modifier.height(36.dp))

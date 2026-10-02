@@ -92,6 +92,10 @@ object AdMobService {
 
     /** Asynchronously loads one interstitial ad and holds onto it until shown. */
     fun loadInterstitial(context: Context) {
+        if (!AdMobConsent.canRequestAds(context)) {
+            Log.d(TAG, "Cannot request ads per consent status; skipping interstitial load")
+            return
+        }
         InterstitialAd.load(
             context.applicationContext,
             AdMobConfig.interstitialAdUnitId,
@@ -134,27 +138,38 @@ object AdMobService {
             onClosed()
             return
         }
+        // Consume the ad immediately to prevent accidental duplicate show calls from rapid taps
+        interstitialAd = null
+
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdDismissedFullScreenContent() {
-                interstitialAd = null
                 loadInterstitial(activity)
                 onClosed()
             }
 
             override fun onAdFailedToShowFullScreenContent(error: AdError) {
                 Log.w(TAG, "Interstitial failed to show: ${error.message}")
-                interstitialAd = null
                 loadInterstitial(activity)
                 onClosed()
             }
         }
-        ad.show(activity)
+        try {
+            ad.show(activity)
+        } catch (t: Throwable) {
+            Log.e(TAG, "Exception showing interstitial ad", t)
+            loadInterstitial(activity)
+            onClosed()
+        }
     }
 
     // ── Rewarded ──────────────────────────────────────────────────────────────────────
 
     /** Asynchronously loads one rewarded ad and holds onto it until shown. */
     fun loadRewarded(context: Context) {
+        if (!AdMobConsent.canRequestAds(context)) {
+            Log.d(TAG, "Cannot request ads per consent status; skipping rewarded load")
+            return
+        }
         RewardedAd.load(
             context.applicationContext,
             AdMobConfig.rewardedAdUnitId,
@@ -192,21 +207,28 @@ object AdMobService {
             onClosed()
             return
         }
+        // Consume the ad immediately to prevent accidental duplicate show calls from rapid taps
+        rewardedAd = null
+
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdDismissedFullScreenContent() {
-                rewardedAd = null
                 loadRewarded(activity)
                 onClosed()
             }
 
             override fun onAdFailedToShowFullScreenContent(error: AdError) {
                 Log.w(TAG, "Rewarded ad failed to show: ${error.message}")
-                rewardedAd = null
                 loadRewarded(activity)
                 onClosed()
             }
         }
-        ad.show(activity, OnUserEarnedRewardListener { onReward() })
+        try {
+            ad.show(activity, OnUserEarnedRewardListener { onReward() })
+        } catch (t: Throwable) {
+            Log.e(TAG, "Exception showing rewarded ad", t)
+            loadRewarded(activity)
+            onClosed()
+        }
     }
 
     // ── Native ────────────────────────────────────────────────────────────────────────
@@ -219,6 +241,10 @@ object AdMobService {
     fun loadNativeAd(context: Context, onLoaded: (NativeAd) -> Unit, onFailed: (LoadAdError) -> Unit = {}) {
         if (SettingsRepository.isAdFreeActive()) {
             Log.d(TAG, "Ad-free active; skipping native ad load")
+            return
+        }
+        if (!AdMobConsent.canRequestAds(context)) {
+            Log.d(TAG, "Cannot request ads per consent status; skipping native ad load")
             return
         }
         val videoOptions = VideoOptions.Builder()
@@ -262,6 +288,10 @@ object AdMobService {
     fun loadAppOpen(context: Context) {
         if (SettingsRepository.isAdFreeActive()) {
             Log.d(TAG, "Ad-free active; skipping App Open load")
+            return
+        }
+        if (!AdMobConsent.canRequestAds(context)) {
+            Log.d(TAG, "Cannot request ads per consent status; skipping App Open load")
             return
         }
         if (isLoadingAppOpen || isAppOpenAdAvailable()) {
@@ -321,6 +351,8 @@ object AdMobService {
             onComplete()
             return
         }
+        // Consume the ad reference immediately to prevent double-show calls
+        appOpenAd = null
 
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdShowedFullScreenContent() {
@@ -328,7 +360,6 @@ object AdMobService {
             }
 
             override fun onAdDismissedFullScreenContent() {
-                appOpenAd = null
                 isShowingAppOpen = false
                 loadAppOpen(activity)
                 onComplete()
@@ -336,12 +367,18 @@ object AdMobService {
 
             override fun onAdFailedToShowFullScreenContent(error: AdError) {
                 Log.w(TAG, "App Open ad failed to show: ${error.message}")
-                appOpenAd = null
                 isShowingAppOpen = false
                 loadAppOpen(activity)
                 onComplete()
             }
         }
-        ad.show(activity)
+        try {
+            ad.show(activity)
+        } catch (t: Throwable) {
+            Log.e(TAG, "Exception showing App Open ad", t)
+            isShowingAppOpen = false
+            loadAppOpen(activity)
+            onComplete()
+        }
     }
 }

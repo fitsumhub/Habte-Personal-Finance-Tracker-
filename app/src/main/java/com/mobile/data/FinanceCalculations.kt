@@ -99,6 +99,7 @@ fun incomeByBank(transactions: List<Transaction>, limit: Int = Int.MAX_VALUE): L
 
 // ── Income vs Expense trend buckets (week/month/year, Gregorian or Ethiopian) ──────────
 
+
 /** Parses a [Transaction.date] string into a Calendar with multi-locale and multi-format fallback. */
 fun parseTransactionDate(dateStr: String): Calendar? {
     if (dateStr.isBlank()) return null
@@ -263,26 +264,29 @@ fun yearlyIncomeExpenseSeries(
 
 /** Parses transaction date + time into epoch millis with multi-locale and format fallback. */
 fun transactionTimestampMillis(tx: Transaction): Long? {
-    if (tx.time.isBlank() || tx.date.isBlank()) return null
-    val dtString = "${tx.date.trim()} ${tx.time.trim()}"
-    val patterns = listOf(
-        "MMM dd, yyyy hh:mm a" to Locale.US,
-        "MMM dd, yyyy hh:mm a" to Locale.getDefault(),
-        "MMM dd, yyyy HH:mm" to Locale.US,
-        "MMM dd, yyyy HH:mm" to Locale.getDefault(),
-        "MMM d, yyyy hh:mm a" to Locale.US,
-        "MMM d, yyyy hh:mm a" to Locale.getDefault(),
-        "yyyy-MM-dd HH:mm:ss" to Locale.US,
-        "yyyy-MM-dd HH:mm" to Locale.US,
-        "dd/MM/yyyy HH:mm" to Locale.US
-    )
-    for ((pattern, locale) in patterns) {
-        try {
-            val parsed = SimpleDateFormat(pattern, locale).parse(dtString)
-            if (parsed != null) return parsed.time
-        } catch (_: Exception) {}
+    if (tx.date.isBlank()) return null
+    if (tx.time.isNotBlank()) {
+        val dtString = "${tx.date.trim()} ${tx.time.trim()}"
+        val patterns = listOf(
+            "MMM dd, yyyy hh:mm a" to Locale.US,
+            "MMM dd, yyyy hh:mm a" to Locale.getDefault(),
+            "MMM dd, yyyy HH:mm" to Locale.US,
+            "MMM dd, yyyy HH:mm" to Locale.getDefault(),
+            "MMM d, yyyy hh:mm a" to Locale.US,
+            "MMM d, yyyy hh:mm a" to Locale.getDefault(),
+            "yyyy-MM-dd HH:mm:ss" to Locale.US,
+            "yyyy-MM-dd HH:mm" to Locale.US,
+            "dd/MM/yyyy HH:mm" to Locale.US
+        )
+        for ((pattern, locale) in patterns) {
+            try {
+                val parsed = SimpleDateFormat(pattern, locale).parse(dtString)
+                if (parsed != null) return parsed.time
+            } catch (_: Exception) {}
+        }
     }
-    return null
+    // Fallback to start of day for date
+    return parseTransactionDate(tx.date)?.timeInMillis
 }
 
 /** Result of monthly financial growth / savings calculation for Home section. */
@@ -365,24 +369,13 @@ fun calculateMonthlyGrowth(transactions: List<Transaction>): MonthlyGrowth {
 
 /**
  * Reconstructs a chronological series of balance points for the Home screen sparkline graph.
- * If bank reported explicit balances, uses them and sorts chronologically.
- * Otherwise reconstructs running balance back from current total balance, and sorts from oldest to newest.
+ * If bank reported explicit balances, uses them. Otherwise reconstructs running balance
+ * back from current total balance, and sorts from oldest to newest.
  */
 fun calculateBalanceTrend(transactions: List<Transaction>, currentBalance: Double): List<Float> {
     if (transactions.isEmpty()) {
         val b = currentBalance.toFloat()
         return listOf(b, b, b, b)
-    }
-
-    val txsWithBalance = transactions.filter { it.balance != null }
-    if (txsWithBalance.size >= 2) {
-        val sorted = txsWithBalance.sortedWith { a, b ->
-            val timeA = transactionTimestampMillis(a) ?: parseTransactionDate(a.date)?.timeInMillis ?: 0L
-            val timeB = transactionTimestampMillis(b) ?: parseTransactionDate(b.date)?.timeInMillis ?: 0L
-            timeA.compareTo(timeB)
-        }
-        val points = sorted.takeLast(14).map { it.balance!!.toFloat() }
-        if (points.size >= 2) return points
     }
 
     val recentTxs = transactions.take(14)
@@ -391,12 +384,17 @@ fun calculateBalanceTrend(transactions: List<Transaction>, currentBalance: Doubl
     points.add(running.toFloat())
 
     for (tx in recentTxs) {
-        if (tx.type == "credit") {
-            running -= tx.amount
+        if (tx.balance != null) {
+            points.add(tx.balance.toFloat())
+            running = tx.balance
         } else {
-            running += tx.amount
+            if (tx.type == "credit") {
+                running -= tx.amount
+            } else {
+                running += tx.amount
+            }
+            points.add(running.toFloat())
         }
-        points.add(running.toFloat())
     }
 
     val chronological = points.reversed()

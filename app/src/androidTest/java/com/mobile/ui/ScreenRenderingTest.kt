@@ -142,6 +142,7 @@ class ScreenRenderingTest {
         composeTestRule.setContent {
             AppTheme { TransactionHistoryScreen(onBack = {}) }
         }
+        composeTestRule.onNodeWithText("Transaction History").assertIsDisplayed()
         composeTestRule.onNodeWithText("Transactions").assertIsDisplayed()
     }
 
@@ -150,6 +151,9 @@ class ScreenRenderingTest {
         composeTestRule.setContent {
             AppTheme { TransactionHistoryScreen(onBack = {}) }
         }
+        // The text might be slightly different or below fold
+        composeTestRule.onNodeWithText("No transactions found yet.").assertExists()
+        // The text is "No transactions yet"
         composeTestRule.onNodeWithText("No transactions yet").assertExists()
     }
 
@@ -186,7 +190,7 @@ class ScreenRenderingTest {
         composeTestRule.setContent {
             AppTheme { SupportScreen(onBack = {}) }
         }
-        composeTestRule.onNodeWithText("Is my data secure?").performScrollTo().performClick()
+        composeTestRule.onNodeWithText("Is my data secure?").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText(
             "Yes! All data is stored locally on your device. We never upload your financial information to any server."

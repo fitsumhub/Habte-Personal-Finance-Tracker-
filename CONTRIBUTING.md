@@ -119,3 +119,4 @@ docs: Update bank support table in README
 ---
 
 *Thank you for making Habte better for everyone!* 🇪🇹
+

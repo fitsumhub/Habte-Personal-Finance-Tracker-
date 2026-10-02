@@ -33,3 +33,11 @@
     public static ** valueOf(java.lang.String);
 }
 
+# Google Mobile Ads (AdMob) and User Messaging Platform (UMP)
+-keep public class com.google.android.gms.ads.** { public *; }
+-keep public class com.google.ads.** { public *; }
+-keep public class com.google.android.ump.** { public *; }
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+

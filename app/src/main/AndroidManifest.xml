@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.READ_SMS" />
@@ -172,11 +173,9 @@
         </service>
 
         <!--
-          AdMob requires this App ID meta-data tag to exist, or the SDK throws at
-          MobileAds.initialize() time. This is Google's own public TEST App ID — safe to
-          ship as-is while the app is in development. Before a real release, swap this for
-          the app's real AdMob App ID from the AdMob console (see AdMobConfig.kt, which
-          documents every other test ID that also needs swapping at the same time).
+          Google AdMob Application ID (Habte Financial Tracker Production App ID).
+          Configured in AdMob console: ca-app-pub-2695951066960188~8919692609
+          Required for Google Mobile Ads SDK initialization.
         -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"

@@ -25,6 +25,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
@@ -74,12 +75,16 @@ fun NativeAdComposable(
     if (System.currentTimeMillis() < adFreeUntil) return
 
     val context = LocalContext.current
+    if (!AdMobConsent.canRequestAds(context)) return
+
     val colors = LocalEthiopianColors.current
 
     var nativeAd by remember { mutableStateOf<NativeAd?>(null) }
     var loadFailed by remember { mutableStateOf(false) }
 
     if (loadFailed) return
+
+    val currentAd = rememberUpdatedState(nativeAd)
 
     // Asynchronously request ad; release resources on dispose
     DisposableEffect(Unit) {
@@ -93,7 +98,7 @@ fun NativeAdComposable(
             }
         )
         onDispose {
-            nativeAd?.destroy()
+            currentAd.value?.destroy()
         }
     }
 
