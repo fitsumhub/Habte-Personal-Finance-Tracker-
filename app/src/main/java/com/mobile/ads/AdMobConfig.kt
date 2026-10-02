@@ -13,7 +13,7 @@ package com.mobile.ads
  *   - Banner:       home, analytics, settings screens only
  *   - Interstitial: after export actions and analytics deep-dives
  *   - Rewarded:     user-initiated "remove ads for 1 hour" in Settings / Support
- *   - Native:       not yet placed on any screen (unit created, ready when needed)
+ *   - Native:       transaction history feed & tools screens (unit ca-app-pub-2695951066960188/6891483968)
  *
  * IMPORTANT: Never show ads on PIN entry, add/edit transaction, transfer,
  * payment, or any financial-action screen.
@@ -26,7 +26,7 @@ object AdMobConfig {
     private const val BANNER_PRODUCTION_AD_UNIT_ID       = "ca-app-pub-2695951066960188/4991766196"
     private const val INTERSTITIAL_PRODUCTION_AD_UNIT_ID = "ca-app-pub-2695951066960188/5468499311"
     private const val REWARDED_PRODUCTION_AD_UNIT_ID     = "ca-app-pub-2695951066960188/8249782023"
-    private const val NATIVE_PRODUCTION_AD_UNIT_ID       = "ca-app-pub-2695951066960188/6725515233"
+    private const val NATIVE_PRODUCTION_AD_UNIT_ID       = "ca-app-pub-2695951066960188/6891483968"
 
     // ── Google's official test ad unit IDs (kept for reference / local dev) ──────────
     // These earn no revenue and should NEVER be used in a Play Store release.

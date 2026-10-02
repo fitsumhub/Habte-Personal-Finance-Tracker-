@@ -295,6 +295,7 @@ fun TransactionHistoryScreen(onBack: () -> Unit) {
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                var adPlaced = false
                 grouped.forEach { (date, txsForDate) ->
                     item(key = "header-$date") {
                         Text(
@@ -305,10 +306,27 @@ fun TransactionHistoryScreen(onBack: () -> Unit) {
                             modifier = Modifier.padding(top = 10.dp, bottom = 4.dp, start = 4.dp)
                         )
                     }
-                    items(txsForDate, key = { it.id }) { transaction ->
-                        TransactionItem(
-                            transaction = transaction,
-                            onClick = { selectedTransactionId = transaction.id }
+                    txsForDate.forEachIndexed { index, transaction ->
+                        item(key = transaction.id) {
+                            TransactionItem(
+                                transaction = transaction,
+                                onClick = { selectedTransactionId = transaction.id }
+                            )
+                        }
+                        if (!adPlaced && index == 2) {
+                            item(key = "native-feed-ad") {
+                                com.mobile.ads.NativeAdComposable(
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                )
+                            }
+                            adPlaced = true
+                        }
+                    }
+                }
+                if (!adPlaced) {
+                    item(key = "native-feed-ad-end") {
+                        com.mobile.ads.NativeAdComposable(
+                            modifier = Modifier.padding(vertical = 4.dp)
                         )
                     }
                 }

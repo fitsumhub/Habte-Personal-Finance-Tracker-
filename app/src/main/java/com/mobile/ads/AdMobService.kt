@@ -12,13 +12,16 @@ import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.OnUserEarnedRewardListener
 import com.google.android.gms.ads.RequestConfiguration
+import com.google.android.gms.ads.VideoOptions
 import com.google.android.gms.ads.initialization.InitializationStatus
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.nativead.NativeAd
+import com.google.android.gms.ads.nativead.NativeAdOptions
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
+import com.mobile.data.SettingsRepository
 
 /**
  * Single entry point for every AdMob interaction in the app. Screens never talk to the
@@ -199,6 +202,18 @@ object AdMobService {
      * longer displayed — NativeAdComposable does this automatically for you.
      */
     fun loadNativeAd(context: Context, onLoaded: (NativeAd) -> Unit, onFailed: (LoadAdError) -> Unit = {}) {
+        if (SettingsRepository.isAdFreeActive()) {
+            Log.d(TAG, "Ad-free active; skipping native ad load")
+            return
+        }
+        val videoOptions = VideoOptions.Builder()
+            .setStartMuted(true)
+            .build()
+        val adOptions = NativeAdOptions.Builder()
+            .setVideoOptions(videoOptions)
+            .setAdChoicesPlacement(NativeAdOptions.ADCHOICES_TOP_RIGHT)
+            .build()
+
         val loader = AdLoader.Builder(context.applicationContext, AdMobConfig.nativeAdUnitId)
             .forNativeAd { nativeAd -> onLoaded(nativeAd) }
             .withAdListener(object : AdListener() {
@@ -207,6 +222,7 @@ object AdMobService {
                     onFailed(error)
                 }
             })
+            .withNativeAdOptions(adOptions)
             .build()
         loader.loadAd(AdRequest.Builder().build())
     }
