@@ -316,7 +316,8 @@ fun TransactionHistoryScreen(onBack: () -> Unit) {
                         if (!adPlaced && index == 2) {
                             item(key = "native-feed-ad") {
                                 com.mobile.ads.NativeAdComposable(
-                                    modifier = Modifier.padding(vertical = 4.dp)
+                                    modifier = Modifier.padding(vertical = 4.dp),
+                                    style = com.mobile.ads.NativeAdStyle.FEED
                                 )
                             }
                             adPlaced = true
@@ -326,7 +327,8 @@ fun TransactionHistoryScreen(onBack: () -> Unit) {
                 if (!adPlaced) {
                     item(key = "native-feed-ad-end") {
                         com.mobile.ads.NativeAdComposable(
-                            modifier = Modifier.padding(vertical = 4.dp)
+                            modifier = Modifier.padding(vertical = 4.dp),
+                            style = com.mobile.ads.NativeAdStyle.FEED
                         )
                     }
                 }

@@ -418,7 +418,10 @@ fun ToolsScreen(onNavigate: (String) -> Unit) {
 
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Spacer(modifier = Modifier.height(6.dp))
-                com.mobile.ads.NativeAdComposable(modifier = Modifier.padding(horizontal = 4.dp))
+                com.mobile.ads.NativeAdComposable(
+                    modifier = Modifier.padding(horizontal = 4.dp),
+                    style = com.mobile.ads.NativeAdStyle.CARD
+                )
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {

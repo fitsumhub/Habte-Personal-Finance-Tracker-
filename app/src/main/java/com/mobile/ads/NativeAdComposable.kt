@@ -11,7 +11,14 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -20,44 +27,61 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.gms.ads.nativead.MediaView
 import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdView
 import com.mobile.data.SettingsRepository
+import com.mobile.ui.theme.LocalEthiopianColors
 
 /**
- * Reusable Native Advanced Ad Composable fully compliant with Google Mobile Ads policies.
+ * Display styling presets for Native Advanced Ads.
+ */
+enum class NativeAdStyle {
+    /** Full rich card with MediaView (for tools screen, dashboard, or prominent placements). */
+    CARD,
+    /** Compact feed card optimized for dense transaction feeds and lists. */
+    FEED
+}
+
+/**
+ * Professional Native Advanced Ad Wrapper composable.
  *
- * AdMob Policy & Implementation Highlights:
- * 1. Attribution: Displays a prominent, un-obscured "Ad" badge within the ad view.
- * 2. Visual Separation: Clear card styling with dedicated boundaries and contrast to avoid
- *    confusion with organic transaction items or accidental clicks.
- * 3. Asset Binding: Explicitly binds headline, body, icon, call-to-action, media, and advertiser
- *    to NativeAdView so impression and click tracking registers correctly.
- * 4. Responsive Media: Gracefully hides MediaView (View.GONE) when no video/image media exists,
- *    keeping the ad compact, and scales MediaView when media is present.
- * 5. Lifecycle Management: Automatically destroys the native ad when leaving composition to prevent
- *    native memory leaks.
- * 6. Ad-Free State: Respects user-earned ad-free periods (SettingsRepository.isAdFreeActive()),
- *    rendering nothing (zero height) during ad-free intervals or on load failure.
+ * AdMob Policy & Performance Highlights:
+ * 1. Prominent "Ad" Badge: High-contrast, un-obscured amber gold badge strictly complying with
+ *    Google AdMob native ad display policy.
+ * 2. Visual Separation: Distinct card styling with custom surface elevation and borders to prevent
+ *    accidental clicks or confusion with app content.
+ * 3. Full Asset Registration: Binds headline, body, icon, callToAction, media, advertiser,
+ *    starRating, price, and store to NativeAdView for compliant attribution and measurement.
+ * 4. Zero Layout Shift (CLS): Smoothly animates into view via [AnimatedVisibility] when loaded,
+ *    and collapses to zero height on failure or ad-free state.
+ * 5. Lifecycle Safety: Explicitly calls `nativeAd.destroy()` upon exiting composition to release
+ *    native C++ memory allocations.
+ * 6. Dynamic Theming: Adapts background, text, and border colors from [LocalEthiopianColors].
  */
 @Composable
 fun NativeAdComposable(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    style: NativeAdStyle = NativeAdStyle.CARD,
+    adUnitId: String = AdMobConfig.nativeAdUnitId
 ) {
-    // Respect ad-free time earned through rewarded actions
+    // Respect user-earned ad-free periods
     val adFreeUntil by SettingsRepository.adFreeUntilMillis.collectAsState()
     if (System.currentTimeMillis() < adFreeUntil) return
 
     val context = LocalContext.current
+    val colors = LocalEthiopianColors.current
+
     var nativeAd by remember { mutableStateOf<NativeAd?>(null) }
     var loadFailed by remember { mutableStateOf(false) }
 
     if (loadFailed) return
 
-    // Load ad on entering composition; clean up native memory on dispose
+    // Asynchronously request ad; release resources on dispose
     DisposableEffect(Unit) {
         AdMobService.loadNativeAd(
             context = context,
@@ -73,20 +97,58 @@ fun NativeAdComposable(
         }
     }
 
-    val ad = nativeAd ?: return
+    val ad = nativeAd
 
-    AndroidView(
-        modifier = modifier.fillMaxWidth(),
-        factory = { ctx -> buildNativeAdView(ctx) },
-        update = { adView -> bindNativeAd(adView, ad) }
-    )
+    AnimatedVisibility(
+        visible = ad != null && !loadFailed,
+        enter = fadeIn(animationSpec = tween(400)) + expandVertically(animationSpec = tween(400)),
+        exit = fadeOut(animationSpec = tween(250)) + shrinkVertically(animationSpec = tween(250))
+    ) {
+        if (ad != null) {
+            val surfaceColor = colors.surfaceElevated.toArgb()
+            val borderColor = colors.border.toArgb()
+            val textPrimary = colors.textPrimary.toArgb()
+            val textMuted = colors.textMuted.toArgb()
+            val emeraldColor = colors.emeraldPrimary.toArgb()
+            val goldColor = colors.goldAccent.toArgb()
+
+            AndroidView(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                factory = { ctx ->
+                    buildEnhancedNativeAdView(
+                        context = ctx,
+                        style = style,
+                        surfaceColor = surfaceColor,
+                        borderColor = borderColor,
+                        textPrimary = textPrimary,
+                        textMuted = textMuted,
+                        emeraldColor = emeraldColor,
+                        goldColor = goldColor
+                    )
+                },
+                update = { adView ->
+                    bindEnhancedNativeAd(adView, ad, style)
+                }
+            )
+        }
+    }
 }
 
 /**
- * Builds the NativeAdView hierarchy styled to harmonize with Habte's dark luxury theme
- * while strictly adhering to Google AdMob native ad display guidelines.
+ * Constructs the NativeAdView hierarchy styled to match Habte's dark luxury aesthetic.
  */
-private fun buildNativeAdView(context: Context): NativeAdView {
+private fun buildEnhancedNativeAdView(
+    context: Context,
+    style: NativeAdStyle,
+    surfaceColor: Int,
+    borderColor: Int,
+    textPrimary: Int,
+    textMuted: Int,
+    emeraldColor: Int,
+    goldColor: Int
+): NativeAdView {
     val density = context.resources.displayMetrics.density
     fun dp(value: Int) = (value * density).toInt()
 
@@ -94,8 +156,8 @@ private fun buildNativeAdView(context: Context): NativeAdView {
     val cardBackground = GradientDrawable().apply {
         shape = GradientDrawable.RECTANGLE
         cornerRadius = dp(14).toFloat()
-        setColor(0xFF181E29.toInt()) // Surface elevated dark navy/charcoal
-        setStroke(dp(1), 0xFF2C3748.toInt()) // Subtle card border
+        setColor(surfaceColor)
+        setStroke(dp(1), borderColor)
     }
 
     // ── Mandatory "Ad" Attribution Badge (Policy Requirement) ─────────────────────────
@@ -103,7 +165,7 @@ private fun buildNativeAdView(context: Context): NativeAdView {
         text = "Ad"
         textSize = 10f
         setTypeface(typeface, Typeface.BOLD)
-        setTextColor(0xFF0F172A.toInt()) // Dark text on bright badge
+        setTextColor(0xFF0F172A.toInt()) // Dark slate text on vibrant amber
         val badgeBg = GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
             cornerRadius = dp(4).toFloat()
@@ -116,7 +178,7 @@ private fun buildNativeAdView(context: Context): NativeAdView {
     // ── Advertiser Name / Source ──────────────────────────────────────────────────────
     val advertiser = TextView(context).apply {
         textSize = 11f
-        setTextColor(0xFF94A3B8.toInt()) // Muted slate text
+        setTextColor(textMuted)
         layoutParams = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.WRAP_CONTENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
@@ -127,19 +189,47 @@ private fun buildNativeAdView(context: Context): NativeAdView {
         ellipsize = TextUtils.TruncateAt.END
     }
 
+    // ── Star Rating / Price Chip ──────────────────────────────────────────────────────
+    val starRating = TextView(context).apply {
+        textSize = 11f
+        setTypeface(typeface, Typeface.BOLD)
+        setTextColor(goldColor)
+        layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+            marginStart = dp(6)
+        }
+        visibility = View.GONE
+    }
+
+    val priceOrStore = TextView(context).apply {
+        textSize = 11f
+        setTextColor(textMuted)
+        layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+            marginStart = dp(6)
+        }
+        visibility = View.GONE
+    }
+
     val attributionRow = LinearLayout(context).apply {
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
         addView(adBadge)
         addView(advertiser)
+        addView(starRating)
+        addView(priceOrStore)
     }
 
     // ── Headline ──────────────────────────────────────────────────────────────────────
     val headline = TextView(context).apply {
         textSize = 14f
         setTypeface(typeface, Typeface.BOLD)
-        setTextColor(0xFFF8FAFC.toInt()) // High contrast off-white
-        maxLines = 2
+        setTextColor(textPrimary)
+        maxLines = if (style == NativeAdStyle.FEED) 1 else 2
         ellipsize = TextUtils.TruncateAt.END
         layoutParams = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
@@ -152,24 +242,30 @@ private fun buildNativeAdView(context: Context): NativeAdView {
     // ── Body ──────────────────────────────────────────────────────────────────────────
     val body = TextView(context).apply {
         textSize = 12f
-        setTextColor(0xFFCBD5E1.toInt()) // Subtle secondary text
-        maxLines = 3
+        setTextColor(textMuted)
+        maxLines = if (style == NativeAdStyle.FEED) 2 else 3
         ellipsize = TextUtils.TruncateAt.END
         layoutParams = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
         ).apply {
             topMargin = dp(4)
-            bottomMargin = dp(6)
+            bottomMargin = dp(4)
         }
     }
 
     // ── App / Sponsor Icon ────────────────────────────────────────────────────────────
     val icon = ImageView(context).apply {
-        layoutParams = LinearLayout.LayoutParams(dp(42), dp(42)).apply {
+        val size = if (style == NativeAdStyle.FEED) dp(38) else dp(44)
+        layoutParams = LinearLayout.LayoutParams(size, size).apply {
             marginEnd = dp(12)
         }
         scaleType = ImageView.ScaleType.FIT_CENTER
+        clipToOutline = true
+        background = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = dp(8).toFloat()
+        }
     }
 
     val headerTextColumn = LinearLayout(context).apply {
@@ -187,13 +283,19 @@ private fun buildNativeAdView(context: Context): NativeAdView {
     }
 
     // ── Media View (Image / Video) ────────────────────────────────────────────────────
+    val mediaHeight = if (style == NativeAdStyle.FEED) dp(110) else dp(160)
     val media = MediaView(context).apply {
         layoutParams = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
-            dp(150)
+            mediaHeight
         ).apply {
             topMargin = dp(6)
             bottomMargin = dp(6)
+        }
+        clipToOutline = true
+        background = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = dp(10).toFloat()
         }
     }
 
@@ -202,12 +304,11 @@ private fun buildNativeAdView(context: Context): NativeAdView {
         textSize = 13f
         setTypeface(typeface, Typeface.BOLD)
         setTextColor(Color.WHITE)
-        val ctaBg = GradientDrawable().apply {
+        background = GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
             cornerRadius = dp(10).toFloat()
-            setColor(0xFF00C853.toInt()) // Habte signature emerald green
+            setColor(emeraldColor)
         }
-        background = ctaBg
         layoutParams = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             dp(38)
@@ -216,7 +317,7 @@ private fun buildNativeAdView(context: Context): NativeAdView {
         }
     }
 
-    // ── Root Container ────────────────────────────────────────────────────────────────
+    // ── Content Container ─────────────────────────────────────────────────────────────
     val contentContainer = LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
         background = cardBackground
@@ -235,29 +336,65 @@ private fun buildNativeAdView(context: Context): NativeAdView {
         mediaView = media
         callToActionView = callToAction
         advertiserView = advertiser
+        starRatingView = starRating
+        priceView = priceOrStore
+        storeView = priceOrStore
     }
 }
 
 /**
- * Binds native ad content to registered views and finalizes registration with the SDK.
+ * Binds native ad content to registered views with proper conditional visibility.
  */
-private fun bindNativeAd(adView: NativeAdView, nativeAd: NativeAd) {
-    // Headline (mandatory)
+private fun bindEnhancedNativeAd(
+    adView: NativeAdView,
+    nativeAd: NativeAd,
+    style: NativeAdStyle
+) {
+    // Headline
     (adView.headlineView as? TextView)?.text = nativeAd.headline
 
-    // Body (optional)
+    // Body
     (adView.bodyView as? TextView)?.let {
         it.text = nativeAd.body
         it.visibility = if (nativeAd.body.isNullOrBlank()) View.GONE else View.VISIBLE
     }
 
-    // Advertiser (optional)
+    // Advertiser
     (adView.advertiserView as? TextView)?.let {
         it.text = nativeAd.advertiser
         it.visibility = if (nativeAd.advertiser.isNullOrBlank()) View.GONE else View.VISIBLE
     }
 
-    // Icon (optional)
+    // Star Rating
+    (adView.starRatingView as? TextView)?.let { starView ->
+        val rating = nativeAd.starRating
+        if (rating != null && rating > 0.0) {
+            starView.text = "★ ${String.format(java.util.Locale.US, "%.1f", rating)}"
+            starView.visibility = View.VISIBLE
+        } else {
+            starView.visibility = View.GONE
+        }
+    }
+
+    // Price or Store
+    (adView.priceView as? TextView)?.let { priceView ->
+        val price = nativeAd.price
+        val store = nativeAd.store
+        val label = when {
+            !price.isNullOrBlank() && !store.isNullOrBlank() -> "$price • $store"
+            !price.isNullOrBlank() -> price
+            !store.isNullOrBlank() -> store
+            else -> null
+        }
+        if (label != null) {
+            priceView.text = label
+            priceView.visibility = View.VISIBLE
+        } else {
+            priceView.visibility = View.GONE
+        }
+    }
+
+    // Icon
     (adView.iconView as? ImageView)?.let { iconView ->
         val icon = nativeAd.icon
         if (icon != null) {
@@ -268,10 +405,15 @@ private fun bindNativeAd(adView: NativeAdView, nativeAd: NativeAd) {
         }
     }
 
-    // Media (optional — collapse to 0 height when no media content is present)
+    // Media
     adView.mediaView?.let { mediaView ->
         val mediaContent = nativeAd.mediaContent
-        if (mediaContent != null && (mediaContent.hasVideoContent() || mediaContent.aspectRatio > 0f || mediaContent.mainImage != null)) {
+        val hasMedia = mediaContent != null && (
+            mediaContent.hasVideoContent() ||
+            mediaContent.aspectRatio > 0f ||
+            mediaContent.mainImage != null
+        )
+        if (hasMedia) {
             mediaView.mediaContent = mediaContent
             mediaView.visibility = View.VISIBLE
         } else {
@@ -279,13 +421,12 @@ private fun bindNativeAd(adView: NativeAdView, nativeAd: NativeAd) {
         }
     }
 
-    // Call to Action (optional)
+    // Call to Action
     (adView.callToActionView as? Button)?.let {
         it.text = nativeAd.callToAction
         it.visibility = if (nativeAd.callToAction.isNullOrBlank()) View.GONE else View.VISIBLE
     }
 
-    // Register the populated ad object with the NativeAdView for impression & click measurement
+    // Register with SDK for impression and click tracking
     adView.setNativeAd(nativeAd)
 }
-

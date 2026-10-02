@@ -119,6 +119,10 @@ object AdMobService {
      * on an ad actually appearing.
      */
     fun showInterstitialIfLoaded(activity: Activity, onClosed: () -> Unit = {}) {
+        if (activity.isFinishing || activity.isDestroyed) {
+            onClosed()
+            return
+        }
         // Respect an ad-free grant earned by watching a rewarded ad — an interstitial
         // is exactly the kind of ad ad-free is meant to suppress.
         if (com.mobile.data.SettingsRepository.isAdFreeActive()) {
@@ -179,6 +183,10 @@ object AdMobService {
      * way without a separate error path to handle.
      */
     fun showRewardedIfLoaded(activity: Activity, onReward: () -> Unit, onClosed: () -> Unit = {}) {
+        if (activity.isFinishing || activity.isDestroyed) {
+            onClosed()
+            return
+        }
         val ad = rewardedAd
         if (ad == null) {
             onClosed()
@@ -291,6 +299,10 @@ object AdMobService {
      * - Always calls [onComplete] so caller proceeds cleanly regardless of ad status.
      */
     fun showAppOpenIfAvailable(activity: Activity, onComplete: () -> Unit = {}) {
+        if (activity.isFinishing || activity.isDestroyed) {
+            onComplete()
+            return
+        }
         if (SettingsRepository.isAdFreeActive()) {
             onComplete()
             return
