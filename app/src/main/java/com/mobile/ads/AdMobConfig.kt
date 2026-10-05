@@ -24,7 +24,7 @@ object AdMobConfig {
     // ── Production Ad Unit IDs (ca-app-pub-2695951066960188) ─────────────────────────
     // These are the real ad unit IDs for com.fitsumhub.habtetracker.
     // Format: ca-app-pub-<publisher-id>/<ad-unit-id>
-    private const val BANNER_PRODUCTION_AD_UNIT_ID       = "ca-app-pub-2695951066960188/4991766196"
+    private const val BANNER_PRODUCTION_AD_UNIT_ID       = "ca-app-pub-2695951066960188/4294306445"
     private const val INTERSTITIAL_PRODUCTION_AD_UNIT_ID = "ca-app-pub-2695951066960188/5279019397"
     private const val REWARDED_PRODUCTION_AD_UNIT_ID     = "ca-app-pub-2695951066960188/8249782023"
     private const val NATIVE_PRODUCTION_AD_UNIT_ID       = "ca-app-pub-2695951066960188/4504070330"
