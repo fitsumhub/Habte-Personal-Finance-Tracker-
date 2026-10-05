@@ -79,11 +79,13 @@ object AdMobService {
                 Log.d(TAG, "Mobile Ads SDK initialized: ${status.adapterStatusMap.keys}")
             })
 
-            // Step 3: pre-warm the one-shot ad formats now, so an interstitial/rewarded ad is
+            // Step 3: pre-warm the one-shot ad formats now, so an interstitial/app-open ad is
             // already sitting ready by the time a screen actually wants to show one, instead
             // of the user waiting on a fresh network load at that moment.
             loadInterstitial(activity)
-            loadRewarded(activity)
+            if (AdMobConfig.rewardedAdUnitId != AdMobConfig.interstitialAdUnitId) {
+                loadRewarded(activity)
+            }
             loadAppOpen(activity)
         }
     }
@@ -170,6 +172,11 @@ object AdMobService {
             Log.d(TAG, "Cannot request ads per consent status; skipping rewarded load")
             return
         }
+        if (AdMobConfig.rewardedAdUnitId == AdMobConfig.interstitialAdUnitId) {
+            // Using interstitial unit as fallback for user-initiated support/ad-free flow
+            loadInterstitial(context)
+            return
+        }
         RewardedAd.load(
             context.applicationContext,
             AdMobConfig.rewardedAdUnitId,
@@ -187,15 +194,13 @@ object AdMobService {
         )
     }
 
-    /** True once a rewarded ad has finished preloading and is ready to show. */
-    val isRewardedAdReady: Boolean get() = rewardedAd != null
+    /** True once a rewarded ad (or fallback interstitial ad) has finished preloading and is ready to show. */
+    val isRewardedAdReady: Boolean get() = rewardedAd != null || interstitialAd != null
 
     /**
-     * Shows the preloaded rewarded ad if one is ready. [onReward] fires only if the user
-     * watches to completion — never call it from anywhere else, since a reward must
-     * actually be earned. [onClosed] always fires afterward regardless of outcome (earned,
-     * skipped, or no ad available at all), so callers can safely re-enable their UI either
-     * way without a separate error path to handle.
+     * Shows the preloaded rewarded ad if one is ready (or falls back to the preloaded
+     * interstitial ad when only the 5 standard ad units are configured). [onReward] fires
+     * once the ad completes, and [onClosed] always fires afterward regardless of outcome.
      */
     fun showRewardedIfLoaded(activity: Activity, onReward: () -> Unit, onClosed: () -> Unit = {}) {
         if (activity.isFinishing || activity.isDestroyed) {
@@ -204,6 +209,31 @@ object AdMobService {
         }
         val ad = rewardedAd
         if (ad == null) {
+            val fallbackInterstitial = interstitialAd
+            if (fallbackInterstitial != null) {
+                interstitialAd = null
+                fallbackInterstitial.fullScreenContentCallback = object : FullScreenContentCallback() {
+                    override fun onAdDismissedFullScreenContent() {
+                        onReward()
+                        loadInterstitial(activity)
+                        onClosed()
+                    }
+
+                    override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                        Log.w(TAG, "Fallback interstitial failed to show: ${error.message}")
+                        loadInterstitial(activity)
+                        onClosed()
+                    }
+                }
+                try {
+                    fallbackInterstitial.show(activity)
+                } catch (t: Throwable) {
+                    Log.e(TAG, "Exception showing fallback interstitial ad", t)
+                    loadInterstitial(activity)
+                    onClosed()
+                }
+                return
+            }
             onClosed()
             return
         }
@@ -234,11 +264,16 @@ object AdMobService {
     // ── Native ────────────────────────────────────────────────────────────────────────
 
     /**
-     * Loads one native ad and hands it to [onLoaded]. The caller takes ownership of the
-     * returned [NativeAd] and is responsible for calling `NativeAd.destroy()` once it's no
-     * longer displayed — NativeAdComposable does this automatically for you.
+     * Loads one native ad using [adUnitId] and hands it to [onLoaded]. The caller takes
+     * ownership of the returned [NativeAd] and is responsible for calling `NativeAd.destroy()`
+     * once it's no longer displayed — NativeAdComposable does this automatically for you.
      */
-    fun loadNativeAd(context: Context, onLoaded: (NativeAd) -> Unit, onFailed: (LoadAdError) -> Unit = {}) {
+    fun loadNativeAd(
+        context: Context,
+        adUnitId: String = AdMobConfig.nativeAdUnitId,
+        onLoaded: (NativeAd) -> Unit,
+        onFailed: (LoadAdError) -> Unit = {}
+    ) {
         if (SettingsRepository.isAdFreeActive()) {
             Log.d(TAG, "Ad-free active; skipping native ad load")
             return
@@ -255,11 +290,11 @@ object AdMobService {
             .setAdChoicesPlacement(NativeAdOptions.ADCHOICES_TOP_RIGHT)
             .build()
 
-        val loader = AdLoader.Builder(context.applicationContext, AdMobConfig.nativeAdUnitId)
+        val loader = AdLoader.Builder(context.applicationContext, adUnitId)
             .forNativeAd { nativeAd -> onLoaded(nativeAd) }
             .withAdListener(object : AdListener() {
                 override fun onAdFailedToLoad(error: LoadAdError) {
-                    Log.w(TAG, "Native ad failed to load: ${error.message}")
+                    Log.w(TAG, "Native ad ($adUnitId) failed to load: ${error.message}")
                     onFailed(error)
                 }
             })

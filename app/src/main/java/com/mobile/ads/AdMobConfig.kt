@@ -22,13 +22,18 @@ package com.mobile.ads
 object AdMobConfig {
 
     // ── Production Ad Unit IDs (ca-app-pub-2695951066960188) ─────────────────────────
-    // These are the real ad unit IDs for com.fitsumhub.habtetracker.
-    // Format: ca-app-pub-<publisher-id>/<ad-unit-id>
-    private const val BANNER_PRODUCTION_AD_UNIT_ID       = "ca-app-pub-2695951066960188/4294306445"
-    private const val INTERSTITIAL_PRODUCTION_AD_UNIT_ID = "ca-app-pub-2695951066960188/5279019397"
-    private const val REWARDED_PRODUCTION_AD_UNIT_ID     = "ca-app-pub-2695951066960188/8249782023"
-    private const val NATIVE_PRODUCTION_AD_UNIT_ID       = "ca-app-pub-2695951066960188/4504070330"
-    private const val APP_OPEN_PRODUCTION_AD_UNIT_ID     = "ca-app-pub-2695951066960188/9657248105"
+    // Exact 5 production ad units configured in AdMob Console for com.fitsumhub.habtetracker:
+    // 1. Banner:            ca-app-pub-2695951066960188/4294306445
+    // 2. Native advanced 1: ca-app-pub-2695951066960188/4504070330
+    // 3. Interstitial:      ca-app-pub-2695951066960188/5279019397
+    // 4. Native advanced 2: ca-app-pub-2695951066960188/6891483968
+    // 5. App open:          ca-app-pub-2695951066960188/9657248105
+    private const val BANNER_PRODUCTION_AD_UNIT_ID           = "ca-app-pub-2695951066960188/4294306445"
+    private const val INTERSTITIAL_PRODUCTION_AD_UNIT_ID     = "ca-app-pub-2695951066960188/5279019397"
+    private const val NATIVE_PRODUCTION_AD_UNIT_ID           = "ca-app-pub-2695951066960188/4504070330"
+    private const val NATIVE_SECONDARY_PRODUCTION_AD_UNIT_ID = "ca-app-pub-2695951066960188/6891483968"
+    private const val APP_OPEN_PRODUCTION_AD_UNIT_ID         = "ca-app-pub-2695951066960188/9657248105"
+    private const val REWARDED_PRODUCTION_AD_UNIT_ID         = "ca-app-pub-2695951066960188/5279019397"
 
     // ── Google's official test ad unit IDs (kept for reference / local dev) ──────────
     // These earn no revenue and should NEVER be used in a Play Store release.
@@ -56,6 +61,9 @@ object AdMobConfig {
 
     val nativeAdUnitId: String
         get() = if (USE_TEST_ADS) TEST_NATIVE_ADVANCED_AD_UNIT_ID else NATIVE_PRODUCTION_AD_UNIT_ID
+
+    val nativeSecondaryAdUnitId: String
+        get() = if (USE_TEST_ADS) TEST_NATIVE_ADVANCED_AD_UNIT_ID else NATIVE_SECONDARY_PRODUCTION_AD_UNIT_ID
 
     val appOpenAdUnitId: String
         get() = if (USE_TEST_ADS) TEST_APP_OPEN_AD_UNIT_ID else APP_OPEN_PRODUCTION_AD_UNIT_ID

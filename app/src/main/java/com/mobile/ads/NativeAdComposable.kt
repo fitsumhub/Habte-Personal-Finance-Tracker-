@@ -68,7 +68,7 @@ enum class NativeAdStyle {
 fun NativeAdComposable(
     modifier: Modifier = Modifier,
     style: NativeAdStyle = NativeAdStyle.CARD,
-    adUnitId: String = AdMobConfig.nativeAdUnitId
+    adUnitId: String = if (style == NativeAdStyle.FEED) AdMobConfig.nativeSecondaryAdUnitId else AdMobConfig.nativeAdUnitId
 ) {
     // Respect user-earned ad-free periods
     val adFreeUntil by SettingsRepository.adFreeUntilMillis.collectAsState()
@@ -87,9 +87,10 @@ fun NativeAdComposable(
     val currentAd = rememberUpdatedState(nativeAd)
 
     // Asynchronously request ad; release resources on dispose
-    DisposableEffect(Unit) {
+    DisposableEffect(adUnitId) {
         AdMobService.loadNativeAd(
             context = context,
+            adUnitId = adUnitId,
             onLoaded = { ad ->
                 nativeAd = ad
             },
