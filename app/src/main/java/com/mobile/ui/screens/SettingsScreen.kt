@@ -508,6 +508,7 @@ fun SettingsScreen(onNavigate: (String) -> Unit = {}) {
             // AdMobConfig.BANNER_ALLOWED_ROUTES) — never a financial-action screen.
             Spacer(modifier = Modifier.height(20.dp))
             com.mobile.ads.BannerAdView()
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 

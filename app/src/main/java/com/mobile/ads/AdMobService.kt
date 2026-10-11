@@ -49,6 +49,9 @@ object AdMobService {
     private var isLoadingAppOpen = false
     private var isShowingAppOpen = false
     private var appOpenLoadTime: Long = 0L
+    private var lastAppOpenShownTime: Long = 0L
+    // Google AdMob Policy & Best Practice: 15-minute minimum cooldown between App Open ads
+    private const val APP_OPEN_COOLDOWN_MILLIS = 15 * 60 * 1000L
 
     /**
      * Step 1: gather ad consent (required before any ad request — see AdMobConsent), then
@@ -376,6 +379,12 @@ object AdMobService {
             onComplete()
             return
         }
+        val now = System.currentTimeMillis()
+        if (now - lastAppOpenShownTime < APP_OPEN_COOLDOWN_MILLIS) {
+            Log.d(TAG, "App Open ad skipped: within 15-minute cooldown period")
+            onComplete()
+            return
+        }
         if (!isAppOpenAdAvailable()) {
             loadAppOpen(activity)
             onComplete()
@@ -392,6 +401,7 @@ object AdMobService {
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdShowedFullScreenContent() {
                 isShowingAppOpen = true
+                lastAppOpenShownTime = System.currentTimeMillis()
             }
 
             override fun onAdDismissedFullScreenContent() {

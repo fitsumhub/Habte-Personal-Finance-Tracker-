@@ -88,9 +88,7 @@ fun BannerAdView(
                 if (isLoaded) {
                     Modifier
                         .padding(horizontal = 12.dp, vertical = 6.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(colors.surfaceElevated.copy(alpha = 0.4f))
-                        .border(0.5.dp, colors.border.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                        .background(colors.surfaceElevated.copy(alpha = 0.35f))
                         .padding(vertical = 4.dp)
                 } else {
                     Modifier.height(0.dp)

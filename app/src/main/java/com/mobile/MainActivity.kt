@@ -160,8 +160,8 @@ class MainActivity : AppCompatActivity() {
                 else -> TopLevelScreen.APP
             }
 
-            // AdMob App Open Ad: Triggered when user enters authenticated main app
-            // or brings app to foreground, never interrupting PIN lock, onboarding, or crash fallback.
+            // AdMob App Open Ad: Triggered cleanly when app returns from background to foreground,
+            // strictly throttled by cooldown and never interrupting PIN lock, onboarding, or crash fallback.
             val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
             DisposableEffect(lifecycleOwner, screenState) {
                 val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
@@ -172,12 +172,6 @@ class MainActivity : AppCompatActivity() {
                 lifecycleOwner.lifecycle.addObserver(observer)
                 onDispose {
                     lifecycleOwner.lifecycle.removeObserver(observer)
-                }
-            }
-
-            LaunchedEffect(screenState) {
-                if (screenState == TopLevelScreen.APP) {
-                    AdMobService.showAppOpenIfAvailable(this@MainActivity)
                 }
             }
 

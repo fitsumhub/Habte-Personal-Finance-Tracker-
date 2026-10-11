@@ -276,7 +276,9 @@ private fun buildEnhancedNativeAdView(
 
     val headerTextColumn = LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
-        layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+            marginEnd = dp(24) // Dedicated clearance for AdChoices icon in top-right corner
+        }
         addView(attributionRow)
         addView(headline)
     }
