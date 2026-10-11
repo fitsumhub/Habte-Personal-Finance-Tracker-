@@ -504,10 +504,6 @@ fun SettingsScreen(onNavigate: (String) -> Unit = {}) {
 
             Spacer(modifier = Modifier.height(36.dp))
 
-            // Settings is one of the few screens allowed to show a banner ad (see
-            // AdMobConfig.BANNER_ALLOWED_ROUTES) — never a financial-action screen.
-            Spacer(modifier = Modifier.height(20.dp))
-            com.mobile.ads.BannerAdView()
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
