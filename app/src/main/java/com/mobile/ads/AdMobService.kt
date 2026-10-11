@@ -72,6 +72,7 @@ object AdMobService {
                 .setMaxAdContentRating(RequestConfiguration.MAX_AD_CONTENT_RATING_T)
                 .setTagForChildDirectedTreatment(RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_FALSE)
                 .setTagForUnderAgeOfConsent(RequestConfiguration.TAG_FOR_UNDER_AGE_OF_CONSENT_FALSE)
+                .setTestDeviceIds(listOf(AdRequest.DEVICE_ID_EMULATOR))
                 .build()
             MobileAds.setRequestConfiguration(requestConfiguration)
 
