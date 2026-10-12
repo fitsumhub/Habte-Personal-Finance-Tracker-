@@ -50,5 +50,18 @@ class AdMobConfigTest {
         assertFalse(AdMobConfig.isBannerAllowedOn("transfer"))
         assertFalse(AdMobConfig.isBannerAllowedOn("payment"))
         assertFalse(AdMobConfig.isBannerAllowedOn("security"))
+        // Home dashboard is the only approved banner route
+        assertTrue(AdMobConfig.isBannerAllowedOn("home"))
+    }
+
+    @Test
+    fun testAdFormatFlagsDefaultsAreConservativeForPublisherReview() {
+        // Banner and Native start enabled — safe, non-intrusive formats.
+        assertTrue("Banner ads must be enabled by default", AdMobConfig.enableBannerAds)
+        assertTrue("Native ads must be enabled by default", AdMobConfig.enableNativeAds)
+        // Interstitial and App Open stay DISABLED during the initial publisher review period
+        // to avoid accidental-click or intrusive-ad policy violations.
+        assertFalse("Interstitial ads must be DISABLED during publisher review", AdMobConfig.enableInterstitialAds)
+        assertFalse("App Open ads must be DISABLED during publisher review", AdMobConfig.enableAppOpenAds)
     }
 }

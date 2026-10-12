@@ -53,6 +53,7 @@ fun BannerAdView(
     modifier: Modifier = Modifier,
     adUnitId: String = AdMobConfig.bannerAdUnitId
 ) {
+    if (!AdMobConfig.enableBannerAds) return
     // Respect ad-free time earned by watching rewarded ads
     val adFreeUntil by SettingsRepository.adFreeUntilMillis.collectAsState()
     if (System.currentTimeMillis() < adFreeUntil) return

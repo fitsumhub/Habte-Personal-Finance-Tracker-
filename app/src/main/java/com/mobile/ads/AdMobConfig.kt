@@ -54,6 +54,14 @@ object AdMobConfig {
         false
     }
 
+    // ── Ad format activation flags (Requirement 3) ────────────────────────────────────
+    // Start with one responsive adaptive banner on dashboard.
+    // Interstitial and App Open ads are kept disabled initially during publisher review.
+    var enableBannerAds: Boolean       = true
+    var enableNativeAds: Boolean       = true
+    var enableInterstitialAds: Boolean = false
+    var enableAppOpenAds: Boolean      = false
+
     // ── Dynamic public accessors ──────────────────────────────────────────────────────
     val bannerAdUnitId: String
         get() = if (useTestAds) TEST_BANNER_AD_UNIT_ID else BANNER_PRODUCTION_AD_UNIT_ID
